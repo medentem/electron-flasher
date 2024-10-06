@@ -10,6 +10,9 @@ module.exports = {
       fontFamily: {
         sans: ['InterVariable', ...defaultTheme.fontFamily.sans],
       },
+      colors: {
+        'meshtastic-green': '#67ea94'
+      }
     }
   },
   plugins: [],

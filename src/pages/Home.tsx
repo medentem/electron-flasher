@@ -1,11 +1,11 @@
 // src/pages/Home.tsx
 import type React from 'react';
+import DeviceCard from '../components/DeviceCard';
 
 const Home: React.FC = () => {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Home Page</h1>
-      <p>Welcome to the Home Page!</p>
+    <div className="flex p-4 content-center justify-center items-center">
+      <DeviceCard />
     </div>
   );
 };
