@@ -2,11 +2,16 @@
 import { useState } from 'react'
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon } from '@heroicons/react/20/solid'
 
 const navigation = [
   { name: 'Home', href: '#' }
 ]
-
+const steps = [
+    { name: 'Plugin Device', href: '#', isCurrent: true },
+    { name: 'Update', href: '#', isCurrent: false },
+    { name: 'Complete', href: '#', isCurrent: false },
+]
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -19,11 +24,26 @@ export default function Navbar() {
             <img alt="" src="https://meshtastic.org/design/logo/svg/Mesh_Logo_White.svg" className="h-8 w-auto" />
           </div>
         </div>
-        <div className="flex lg:flex-1">
-          <div className="-m-1.5 p-1.5">
-            <h1 className="font-semibold uppercase">Meshtastic Updater</h1>
-          </div>
-        </div>
+        <nav aria-label="Progress" className="hidden sm:block">
+            <ol role="list" className="flex space-x-4">
+            {steps.map((step, stepIdx) => (
+                <li key={step.name} className="flex items-center">
+                {step.isCurrent ? (
+                    <a href={step.href} aria-current="page" className="text-meshtastic-green">
+                    {step.name}
+                    </a>
+                ) : (
+                    <a href={step.href}>{step.name}</a>
+                )}
+
+                {stepIdx !== steps.length - 1 ? (
+                    <ChevronRightIcon aria-hidden="true" className="ml-4 h-5 w-5 text-gray-300" />
+                ) : null}
+                </li>
+            ))}
+            </ol>
+        </nav>
+        <p className="sm:hidden">Step 2 of 4</p>
         <div className="flex lg:hidden">
           <button
             type="button"
