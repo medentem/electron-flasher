@@ -7,11 +7,13 @@ import About from './pages/About';
 const App: React.FC = () => {
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
+        <div className="bg-gray-800">
+            <Navbar />
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+            </Routes>
+        </div>
     </Router>
   );
 };
