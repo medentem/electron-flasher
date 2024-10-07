@@ -1,8 +1,8 @@
 import { CheckIcon } from '@heroicons/react/24/solid'
 
 const steps = [
-  { id: '01', name: 'Connect Device', href: '#', status: 'complete' },
-  { id: '02', name: 'Update', href: '#', status: 'current' },
+  { id: '01', name: 'Connect Device', href: '#', status: 'current' },
+  { id: '02', name: 'Update', href: '#', status: 'upcoming' },
   { id: '03', name: 'Complete', href: '#', status: 'upcoming' },
 ]
 

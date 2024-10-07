@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
+import { registerSerialPortHandlers } from './ipcHandlers/serialPorts';
 import { SerialPort } from 'serialport';
 import path from 'path';
 
@@ -13,6 +14,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
+      contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
     },
   });
@@ -31,7 +33,10 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  registerSerialPortHandlers();
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -48,12 +53,6 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
-});
-
-// Handle IPC from renderer process
-ipcMain.handle('get-serial-ports', async () => {
-  const ports = await SerialPort.list();
-  return ports;
 });
 
 // In this file you can include the rest of your app's specific main process

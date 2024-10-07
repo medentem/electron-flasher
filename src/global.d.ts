@@ -2,9 +2,13 @@ export {};
 
 declare global {
   interface Window {
-    electronAPI: {
-      getSerialPorts: () => Promise<SerialPortInfo[]>;
-    };
+    electronAPI: IElectronAPI;
+  }
+
+  interface IElectronAPI {
+    getSerialPorts: () => Promise<SerialPortInfo[]>;
+    openSerialPort: (path: string) => Promise<boolean>;
+    closeSerialPort: (path: string) => Promise<boolean>;
   }
 
   interface SerialPortInfo {
