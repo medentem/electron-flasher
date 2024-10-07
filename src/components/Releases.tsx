@@ -67,23 +67,23 @@ export default function Releases() {
   return (
     <div className="flow-root">
       <div className="border-b border-gray-200 py-2">
-          <div className="md:flex md:items-center md:justify-between">
+          <div className="flex md:items-center md:justify-between">
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-semibold leading-6 text-gray-900">Available Updates</h3>
             </div>
             <div className="min-w-0 flex 1">
-              <FolderPlusIcon className='text-gray-500 size-6' />
+              <FolderPlusIcon className='text-gray-500 size-6 cursor-pointer' />
             </div>
           </div>
       </div>
-      <ul className="-mb-8">
+      <ul className="overflow-scroll">
         {releases.map((item, itemIdx) => (
           <li key={item.id}>
-            <div className="relative pb-2">
+            <div className="relative">
               {itemIdx !== releases.length - 1 ? (
-                <span aria-hidden="true" className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" />
+                <span aria-hidden="true" className="absolute left-8 top-4 -ml-px h-full w-0.5 bg-gray-200" />
               ) : null}
-              <div className={`p-2 relative flex space-x-3 ${item.selected ? 'border-2 border-meshtastic-green' : ''}`}>
+              <div className={`p-4 relative flex space-x-3 hover:bg-gray-200 ${item.selected ? 'border-2 border-meshtastic-green' : ''}`}>
                 <div>
                   <span
                     className={classNames(
