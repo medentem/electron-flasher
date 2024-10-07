@@ -1,4 +1,21 @@
+import { useEffect, useState } from "react";
+
 export default function DeviceCard() {
+  const [ports, setPorts] = useState<SerialPortInfo[]>([]);
+
+  useEffect(() => {
+    const fetchPorts = async () => {
+      const portsList = await window.electronAPI.getSerialPorts();
+      setPorts(portsList);
+    };
+
+    fetchPorts();
+  }, []);
+
+  useEffect(() => {
+    console.log(ports);
+  }, [ports])
+
   return (
     <div className="flow-root">
       <div className="border-b border-gray-200 py-2">

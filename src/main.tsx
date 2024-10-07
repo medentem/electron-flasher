@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { SerialPort } from 'serialport';
 import path from 'path';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -47,6 +48,12 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Handle IPC from renderer process
+ipcMain.handle('get-serial-ports', async () => {
+  const ports = await SerialPort.list();
+  return ports;
 });
 
 // In this file you can include the rest of your app's specific main process
