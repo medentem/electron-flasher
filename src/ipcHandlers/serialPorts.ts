@@ -3,6 +3,7 @@
 import { ipcMain } from "electron";
 import { SerialPort } from "serialport";
 import { exec } from "node:child_process";
+import wmi from 'node-wmi';
 import plist from 'plist';
 
 export function registerSerialPortHandlers() {
@@ -15,6 +16,12 @@ export function registerSerialPortHandlers() {
           if (process.platform === "darwin") {
             console.info("OSX detected - getting additional information.");
             deviceName = await getDeviceNameForMacOS(port.serialNumber);
+          } else if (process.platform === "win32") {
+            const wmiData = await getWmiDeviceInfo();
+            const wmiDevice = wmiData.find((device) => device.PNPDeviceID === port.pnpId);
+            if (wmiDevice) {
+                deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
+            }
           }
           return {
             ...port,
@@ -31,7 +38,7 @@ export function registerSerialPortHandlers() {
 
   ipcMain.handle("open-serial-port", async (_event, path: string) => {
     try {
-      const port = new SerialPort({ path, baudRate: 115200 });
+      const port = new SerialPortInfo({ path, baudRate: 115200 });
       return "Connected";
     } catch (error) {
       console.error(`Error opening serial port ${path}:`, error);
@@ -93,4 +100,22 @@ function findDeviceNameInIORegData(data: any, portSerial: string): string | unde
       }
     }
     return undefined;
+  }
+  
+  async function getWmiDeviceInfo(): Promise<any[]> {
+    return new Promise((resolve) => {
+      wmi.Query(
+        {
+          class: 'Win32_SerialPort',
+        },
+        (err: any, result: any[]) => {
+          if (err) {
+            console.error('Error querying WMI:', err);
+            resolve([]);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+    });
   }

@@ -20,5 +20,6 @@ declare global {
     locationId?: string;
     productId?: string;
     vendorId?: string;
+    deviceName?: string;
   }
 }
