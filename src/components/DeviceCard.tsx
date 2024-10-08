@@ -11,10 +11,7 @@ export default function DeviceCard() {
 
   const fetchPorts = async () => {
     const portsList = await window.electronAPI.getSerialPorts();
-    for (let i = 0; i < portsList.length; i++) {
-      const port = await window.electronAPI.openSerialPort(portsList[i].path);
-      console.log(port);
-    }
+    console.log(portsList);
   };
 
   useEffect(() => {
@@ -40,7 +37,7 @@ export default function DeviceCard() {
     try {
       const result: DeviceHardware[] =
         await window.electronAPI.apiRequest(firmwareApi);
-      setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
+      //setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
     } catch (ex) {
       console.error(ex);
       // Fallback to offline list
