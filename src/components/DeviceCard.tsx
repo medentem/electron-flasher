@@ -1,20 +1,54 @@
 import { useEffect, useState } from "react";
+import { createUrl } from "../utils/api";
+import type { DeviceHardware } from "src/types/api";
+import { OfflineHardwareList } from "../types/resources";
 
 export default function DeviceCard() {
   const [ports, setPorts] = useState<SerialPortInfo[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [targets, setTargets] = useState<DeviceHardware[]>([]);
+  const firmwareApi = createUrl("api/resource/deviceHardware");
+
+  const fetchPorts = async () => {
+    const portsList = await window.electronAPI.getSerialPorts();
+    for (let i = 0; i < portsList.length; i++) {
+      const port = await window.electronAPI.openSerialPort(portsList[i].path);
+      console.log(port);
+    }
+  };
 
   useEffect(() => {
-    const fetchPorts = async () => {
-      const portsList = await window.electronAPI.getSerialPorts();
-      setPorts(portsList);
-    };
-
-    fetchPorts();
+    fetchDeviceList();
   }, []);
 
   useEffect(() => {
     console.log(ports);
-  }, [ports])
+  }, [ports]);
+
+  useEffect(() => {
+    console.log(targets);
+  }, [targets]);
+
+  const scanForDevice = () => {
+    setIsScanning(true);
+    fetchPorts().then(() => {
+      setIsScanning(false);
+    });
+  };
+
+  const fetchDeviceList = async () => {
+    try {
+      const result: DeviceHardware[] =
+        await window.electronAPI.apiRequest(firmwareApi);
+      setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
+    } catch (ex) {
+      console.error(ex);
+      // Fallback to offline list
+      setTargets(
+        OfflineHardwareList.filter((t: DeviceHardware) => t.activelySupported),
+      );
+    }
+  };
 
   return (
     <div className="flow-root">
@@ -29,8 +63,10 @@ export default function DeviceCard() {
             <button
               type="button"
               className="inline-flex items-center rounded-md bg-meshtastic-green px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm hover:bg-meshtastic-green/70"
+              onClick={scanForDevice}
+              disabled={isScanning}
             >
-              Scan For Device
+              {isScanning ? "Scanning..." : "Scan For Device"}
             </button>
           </div>
         </div>

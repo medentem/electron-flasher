@@ -9,6 +9,7 @@ declare global {
     getSerialPorts: () => Promise<SerialPortInfo[]>;
     openSerialPort: (path: string) => Promise<boolean>;
     closeSerialPort: (path: string) => Promise<boolean>;
+    apiRequest: (url: string) => Promise<any>;
   }
 
   interface SerialPortInfo {

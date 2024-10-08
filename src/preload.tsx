@@ -2,8 +2,9 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 import { contextBridge, ipcRenderer } from 'electron';
 import { preloadSerialPortAPIs } from './preloadScripts/serialPorts';
+import { preloadApi } from './preloadScripts/api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   ...preloadSerialPortAPIs(ipcRenderer),
-  // ...other exposed APIs
+  ...preloadApi(ipcRenderer)
 });

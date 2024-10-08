@@ -16,9 +16,8 @@ export function registerSerialPortHandlers() {
 
   ipcMain.handle('open-serial-port', async (_event, path: string) => {
     try {
-      const port = new SerialPort({ path, baudRate: 9600 });
-      // Store the port instance if needed
-      return true;
+      const port = new SerialPort({ path, baudRate: 115200 });
+      return port;
     } catch (error) {
       console.error(`Error opening serial port ${path}:`, error);
       throw error;
