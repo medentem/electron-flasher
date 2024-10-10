@@ -5,13 +5,14 @@ import { OfflineHardwareList } from "../types/resources";
 
 export default function DeviceCard() {
   const [ports, setPorts] = useState<SerialPortInfo[]>([]);
+  const [meshDevicePort, setMeshDevicePort] = useState<SerialPortInfo>(undefined);
   const [isScanning, setIsScanning] = useState(false);
   const [targets, setTargets] = useState<DeviceHardware[]>([]);
   const firmwareApi = createUrl("api/resource/deviceHardware");
 
   const fetchPorts = async () => {
     const portsList = await window.electronAPI.getSerialPorts();
-    console.log(portsList);
+    setPorts(portsList);
   };
 
   useEffect(() => {
@@ -19,12 +20,22 @@ export default function DeviceCard() {
   }, []);
 
   useEffect(() => {
-    console.log(ports);
-  }, [ports]);
+    if (ports && ports.length > 0 && targets && targets.length > 0) {
+      const matchingPorts = ports.find(x => {
+          const matchingTargets = targets.find(y => {
+            const deviceNameLower = x.deviceName?.toLowerCase();
+            return deviceNameLower.includes(y.platformioTarget.toLowerCase()) || deviceNameLower.includes(y.displayName.toLowerCase()) || deviceNameLower.includes(y.architecture.toLowerCase());
+          });
+          return matchingTargets;
+         }
+      );
+      setMeshDevicePort(matchingPorts);
+    }
+  }, [ports, targets]);
 
   useEffect(() => {
-    console.log(targets);
-  }, [targets]);
+    console.log(meshDevicePort);
+  }, [meshDevicePort]);
 
   const scanForDevice = () => {
     setIsScanning(true);
@@ -37,7 +48,7 @@ export default function DeviceCard() {
     try {
       const result: DeviceHardware[] =
         await window.electronAPI.apiRequest(firmwareApi);
-      //setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
+        setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
     } catch (ex) {
       console.error(ex);
       // Fallback to offline list
