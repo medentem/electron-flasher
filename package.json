@@ -47,6 +47,7 @@
   "dependencies": {
     "@headlessui/react": "^2.1.9",
     "@heroicons/react": "^2.1.5",
+    "@meshtastic/js": "^2.3.7-5",
     "@types/plist": "^3.0.5",
     "@vitejs/plugin-react": "^4.3.2",
     "axios": "^1.7.7",
