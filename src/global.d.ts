@@ -1,14 +1,19 @@
 export {};
 
 declare global {
+
+interface Navigator {
+    serial: any;
+}
+
   interface Window {
     electronAPI: IElectronAPI;
   }
 
   interface IElectronAPI {
     getSerialPorts: () => Promise<SerialPortInfo[]>;
-    openSerialPort: (path: string) => Promise<boolean>;
-    closeSerialPort: (path: string) => Promise<boolean>;
+    connectToDevice: (path: string) => Promise<void>;
+    disconnectFromDevice: (path: string) => Promise<void>;
     apiRequest: (url: string) => Promise<any>;
   }
 

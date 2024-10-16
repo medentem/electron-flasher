@@ -21,7 +21,7 @@ export default function DeviceCard() {
 
   useEffect(() => {
     if (ports && ports.length > 0 && targets && targets.length > 0) {
-      const matchingPorts = ports.find(x => {
+      const matchingPort = ports.find(x => {
           const matchingTargets = targets.find(y => {
             const deviceNameLower = x.deviceName?.toLowerCase();
             return deviceNameLower.includes(y.platformioTarget.toLowerCase()) || deviceNameLower.includes(y.displayName.toLowerCase()) || deviceNameLower.includes(y.architecture.toLowerCase());
@@ -29,7 +29,10 @@ export default function DeviceCard() {
           return matchingTargets;
          }
       );
-      setMeshDevicePort(matchingPorts);
+      setMeshDevicePort(matchingPort);
+      if (matchingPort) {
+        window.electronAPI.connectToDevice(matchingPort.path);
+      }
     }
   }, [ports, targets]);
 
