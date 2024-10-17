@@ -15,6 +15,8 @@ interface Navigator {
     connectToDevice: (path: string) => Promise<void>;
     disconnectFromDevice: (path: string) => Promise<void>;
     apiRequest: (url: string) => Promise<any>;
+    onDeviceMetadata: (callback: (data: any) => void) => void;
+    getAssetPath: (assetName: string) => string;
   }
 
   interface SerialPortInfo {

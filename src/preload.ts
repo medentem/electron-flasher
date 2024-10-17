@@ -6,5 +6,5 @@ import { preloadApi } from './preloadScripts/api';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   ...preloadSerialPortAPIs(ipcRenderer),
-  ...preloadApi(ipcRenderer)
+  ...preloadApi(ipcRenderer),
 });

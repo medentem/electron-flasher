@@ -6,14 +6,13 @@ import { exec } from "node:child_process";
 import wmi from 'node-wmi';
 import plist from 'plist';
 import type { BrowserWindow } from "electron/main";
-import { Client } from '@meshtastic/js';
-import * as Protobuf from '@meshtastic/protobufs';
+import { Client, ElectronSerialConnection } from '@meshtastic/js';
 
 let _mainWindow: BrowserWindow | undefined;
+let connection: ElectronSerialConnection | undefined;
 
 export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   _mainWindow = mainWindow;
-  console.log(_mainWindow);
 
   ipcMain.handle("get-serial-ports", async () => {
     try {
@@ -46,15 +45,12 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle("connect-to-device", async (_event, path: string) => {
     try {
-      //await subscribeToPackets(mainWindow);
       const client = new Client();
-      const connection = client.createElectronSerialConnection();
+      connection = client.createElectronSerialConnection();
       connection.events.onDeviceMetadataPacket.subscribe((packet: any) => {
-        console.log(packet);
+        _mainWindow.webContents.send('on-device-metadata', packet);
       });
       await connection.connect({path, baudRate: 115200, concurrentLogOutput: false});
-      await new Promise(_ => setTimeout(_, 15000));
-      await connection.disconnect();
       console.log("connect-to-device");
     } catch (error) {
       console.error(`Error opening serial port ${path}:`, error);
