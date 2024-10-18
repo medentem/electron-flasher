@@ -46,6 +46,15 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle("connect-to-device", async (_event, path: string) => {
     try {
       const client = new Client();
+      try {
+        if (connection) {
+          await connection.disconnect();
+          connection = undefined;
+        }
+      } catch (error) {
+        console.error(`Error closing serial port ${path}:`, error);
+        throw error;
+      }
       connection = client.createElectronSerialConnection();
       connection.events.onDeviceMetadataPacket.subscribe((packet: any) => {
         _mainWindow.webContents.send('on-device-metadata', packet);

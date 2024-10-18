@@ -39,7 +39,7 @@
     "tslog": "^4.9.3",
     "typescript": "~4.5.4",
     "vite": "^5.4.8",
-    "@meshtastic/js": "git://github.com/medentem/js.git#9d96e6ec944476beaaf1de37767d28ee7c7c1aa9"
+    "@meshtastic/js": "git://github.com/medentem/js.git#ef122df29137ebc81f5996d10633962632f551c3"
   },
   "keywords": [],
   "author": {
