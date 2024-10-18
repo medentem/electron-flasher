@@ -48,6 +48,7 @@ export default function DeviceCard() {
     }
   }, [ports, targets]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: order of events make this rule superfluous
   useEffect(() => {
     if (connectedDevice) {
       console.log(connectedDevice);
