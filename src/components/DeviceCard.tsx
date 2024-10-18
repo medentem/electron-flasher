@@ -1,40 +1,38 @@
 import { useEffect, useState } from "react";
-import { createUrl } from "../utils/api";
-import type { DeviceHardware } from "src/types/api";
-import { OfflineHardwareList } from "../types/resources";
 import type * as Protobuf from "@meshtastic/protobufs";
+import { useDeviceStore } from "../stores/deviceStore";
 
 export default function DeviceCard() {
-  const [ports, setPorts] = useState<SerialPortInfo[]>([]);
-  const [connectedDevice, setConnectedDevice] = useState<
-    Protobuf.Mesh.DeviceMetadata | undefined
-  >();
-  const [connectedTarget, setConnectedTarget] = useState<
-    DeviceHardware | undefined
-  >();
-  const [meshDevicePort, setMeshDevicePort] =
-    useState<SerialPortInfo>(undefined);
-  const [deviceImage, setDeviceImage] = useState<any | undefined>();
+  const availablePorts = useDeviceStore((state) => state.availablePorts);
+  const availableTargets = useDeviceStore((state) => state.availableTargets);
+  const selectedPort = useDeviceStore((state) => state.selectedPort);
+  const connectedTarget = useDeviceStore((state) => state.connectedTarget);
+  const connectedDevice = useDeviceStore((state) => state.connectedDevice);
+  const setSelectedPort = useDeviceStore((state) => state.setSelectedPort);
+  const deviceImage = useDeviceStore((state) => state.deviceImage);
+  const setConnectedDevice = useDeviceStore(
+    (state) => state.setConnectedDevice,
+  );
+  const fetchDeviceList = useDeviceStore((state) => state.fetchDeviceList);
+  const fetchPorts = useDeviceStore((state) => state.fetchPorts);
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [targets, setTargets] = useState<DeviceHardware[]>([]);
-  const getDeviceHardwareApi = createUrl("api/resource/deviceHardware");
-
-  const fetchPorts = async () => {
-    const portsList = await window.electronAPI.getSerialPorts();
-    setPorts(portsList);
-  };
 
   useEffect(() => {
     fetchDeviceList();
-  }, []);
+  }, [fetchDeviceList]);
 
   useEffect(() => {
-    if (ports && ports.length > 0 && targets && targets.length > 0) {
+    if (
+      availablePorts &&
+      availablePorts.length > 0 &&
+      availableTargets &&
+      availableTargets.length > 0
+    ) {
       // Find the first PORT that matches ANY of the known meshtastic device characteristics (platformio, name, architecture)
       // We're using a metal detector on hackstack to find the needle here
-      const matchingPort = ports.find((x) => {
-        const matchingTargets = targets.find((y) => {
+      const matchingPort = availablePorts.find((x) => {
+        const matchingTargets = availableTargets.find((y) => {
           const deviceNameLower = x.deviceName?.toLowerCase();
           return (
             deviceNameLower.includes(y.platformioTarget.toLowerCase()) ||
@@ -44,7 +42,7 @@ export default function DeviceCard() {
         });
         return matchingTargets;
       });
-      setMeshDevicePort(matchingPort);
+      setSelectedPort(matchingPort);
       // If we found a port that is likely to be a meshtastic device, connect to it to extract DeviceMetadata
       if (matchingPort) {
         window.electronAPI.onDeviceMetadata((data) => {
@@ -53,32 +51,12 @@ export default function DeviceCard() {
         window.electronAPI.connectToDevice(matchingPort.path);
       }
     }
-  }, [ports, targets]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: order of events make this rule superfluous
-  useEffect(() => {
-    if (connectedDevice) {
-      console.log(connectedDevice);
-      // Now that we've successfully connected to the device, and we have the DeviceMetadata,
-      // we can go back into the targets and ensure we have the exact target this device is
-      const target = targets.find((x) => x.hwModel === connectedDevice.hwModel);
-      if (target) {
-        try {
-          const deviceImage = `https://wismesh.org/images/devices/${target.displayName.replaceAll(" ", "_").toUpperCase()}.png`;
-          setDeviceImage(deviceImage);
-        } catch (e) {
-          console.log("Error loading image: ");
-          console.log(e);
-        }
-        setConnectedTarget(target);
-      }
-    }
-  }, [connectedDevice]);
+  }, [setSelectedPort, setConnectedDevice, availablePorts, availableTargets]);
 
   const scanForDevice = async () => {
-    if (meshDevicePort) {
-      await window.electronAPI.disconnectFromDevice(meshDevicePort.path);
-      setMeshDevicePort(undefined);
+    if (selectedPort) {
+      await window.electronAPI.disconnectFromDevice(selectedPort.path);
+      setSelectedPort(undefined);
     }
     setIsScanning(true);
     fetchPorts().then(() => {
@@ -89,20 +67,7 @@ export default function DeviceCard() {
   const updateDevice = async () => {
     console.log("update");
     setIsUpdating(true);
-  };
-
-  const fetchDeviceList = async () => {
-    try {
-      const result: DeviceHardware[] =
-        await window.electronAPI.apiRequest(getDeviceHardwareApi);
-      setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
-    } catch (ex) {
-      console.error(ex);
-      // Fallback to offline list
-      setTargets(
-        OfflineHardwareList.filter((t: DeviceHardware) => t.activelySupported),
-      );
-    }
+    await window.electronAPI.enterDfuMode();
   };
 
   return (
@@ -173,7 +138,7 @@ export default function DeviceCard() {
               <span className="sr-only">Loading...</span>
             </>
           )}
-          {connectedTarget && meshDevicePort && connectedDevice && (
+          {connectedTarget && selectedPort && connectedDevice && (
             <div className="w-full">
               <div className="px-4 sm:px-0">
                 <h3 className="text-base font-semibold leading-7 text-gray-900">
@@ -198,7 +163,7 @@ export default function DeviceCard() {
                       Device Name
                     </dt>
                     <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                      {meshDevicePort.deviceName}
+                      {selectedPort.deviceName}
                     </dd>
                   </div>
                   <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
@@ -206,7 +171,7 @@ export default function DeviceCard() {
                       Device Serial
                     </dt>
                     <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                      {meshDevicePort.serialNumber}
+                      {selectedPort.serialNumber}
                     </dd>
                   </div>
                   <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
@@ -214,7 +179,7 @@ export default function DeviceCard() {
                       Manufacturer
                     </dt>
                     <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                      {meshDevicePort.manufacturer}
+                      {selectedPort.manufacturer}
                     </dd>
                   </div>
                   <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">

@@ -22,6 +22,7 @@
     "@electron-forge/plugin-fuses": "^7.5.0",
     "@electron-forge/plugin-vite": "^7.5.0",
     "@electron/fuses": "^1.8.0",
+    "@meshtastic/js": "git://github.com/medentem/js.git#95671e34abc1876e5633d40daece9671acd59564",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "@types/react-router-dom": "^5.3.3",
@@ -38,8 +39,7 @@
     "ts-node": "^10.9.2",
     "tslog": "^4.9.3",
     "typescript": "~4.5.4",
-    "vite": "^5.4.8",
-    "@meshtastic/js": "git://github.com/medentem/js.git#ef122df29137ebc81f5996d10633962632f551c3"
+    "vite": "^5.4.8"
   },
   "keywords": [],
   "author": {
@@ -63,6 +63,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
-    "serialport": "^12.0.0"
+    "serialport": "^12.0.0",
+    "zustand": "^5.0.0"
   }
 }

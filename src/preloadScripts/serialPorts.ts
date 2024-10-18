@@ -7,5 +7,6 @@ export function preloadSerialPortAPIs(ipcRenderer: Electron.IpcRenderer) {
       ipcRenderer.invoke("disconnect-from-device", path),
     onDeviceMetadata: (callback: (data: any) => void) =>
       ipcRenderer.on("on-device-metadata", (_event, data) => callback(data)),
+    enterDfuMode: () => ipcRenderer.invoke("enter-dfu-mode"),
   };
 }

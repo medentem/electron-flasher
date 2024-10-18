@@ -1,12 +1,18 @@
 import { CheckIcon } from "@heroicons/react/24/solid";
 
-const steps = [
-  { id: "01", name: "Connect Device", href: "#", status: "current" },
-  { id: "02", name: "Update", href: "#", status: "upcoming" },
-  { id: "03", name: "Complete", href: "#", status: "upcoming" },
-];
+export interface Step {
+  name: string;
+  status: "current" | "upcoming" | "complete";
+  shouldAnimate: boolean;
+  onClick?: () => void;
+}
 
-export default function Steps() {
+export interface StepsProps {
+  steps: Step[];
+}
+
+export default function Steps(props: StepsProps) {
+  const { steps } = props;
   return (
     <>
       <nav aria-label="Progress" className="hidden md:block">
@@ -14,7 +20,10 @@ export default function Steps() {
           {steps.map((step, stepIdx) => (
             <li key={step.name} className="relative md:flex md:flex-1">
               {step.status === "complete" ? (
-                <a href={step.href} className="group flex w-full items-center">
+                <span
+                  onClick={step.onClick}
+                  className="group flex w-full items-center"
+                >
                   <span className="flex items-center px-6 py-4 text-sm font-medium">
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-meshtastic-green group-hover:bg-meshtastic-green">
                       <CheckIcon
@@ -26,10 +35,10 @@ export default function Steps() {
                       {step.name}
                     </span>
                   </span>
-                </a>
+                </span>
               ) : step.status === "current" ? (
-                <a
-                  href={step.href}
+                <span
+                  onClick={step.onClick}
                   aria-current="step"
                   className="flex items-center px-6 py-4 text-sm font-medium"
                 >
@@ -39,9 +48,12 @@ export default function Steps() {
                   <span className="ml-4 text-sm font-medium text-meshtastic-green">
                     {step.name}
                   </span>
-                </a>
+                </span>
               ) : (
-                <a href={step.href} className="group flex items-center">
+                <span
+                  onClick={step.onClick}
+                  className="group flex items-center"
+                >
                   <span className="flex items-center px-6 py-4 text-sm font-medium">
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400">
                       <span className="text-white group-hover:text-gray-300">
@@ -52,7 +64,7 @@ export default function Steps() {
                       {step.name}
                     </span>
                   </span>
-                </a>
+                </span>
               )}
 
               {stepIdx !== steps.length - 1 ? (
@@ -83,7 +95,10 @@ export default function Steps() {
           ))}
         </ol>
       </nav>
-      <p className="md:hidden">Step 2 of 4</p>
+      <p className="md:hidden">
+        Step {steps.indexOf(steps.find((x) => x.status === "current")) + 1} of{" "}
+        {steps.length}
+      </p>
     </>
   );
 }

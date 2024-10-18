@@ -10,6 +10,7 @@ import { Client, type ElectronSerialConnection } from "@meshtastic/js";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
+let canEnterFlashMode: boolean = false;
 
 export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   _mainWindow = mainWindow;
@@ -46,31 +47,15 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   });
 
   ipcMain.handle("connect-to-device", async (_event, path: string) => {
-    try {
-      const client = new Client();
-      try {
-        if (connection) {
-          await connection.disconnect();
-          connection = undefined;
-        }
-      } catch (error) {
-        console.error(`Error closing serial port ${path}:`, error);
-        throw error;
-      }
-      connection = client.createElectronSerialConnection();
-      connection.events.onDeviceMetadataPacket.subscribe((packet: any) => {
-        _mainWindow.webContents.send("on-device-metadata", packet);
-      });
-      await connection.connect({
-        path,
-        baudRate: 115200,
-        concurrentLogOutput: false,
-      });
-      console.log("connect-to-device");
-    } catch (error) {
-      console.error(`Error opening serial port ${path}:`, error);
-      throw error;
+    await connectToDevice(path);
+  });
+
+  ipcMain.handle("enter-dfu-mode", async (_event) => {
+    if (!canEnterFlashMode || !connection) {
+      console.error("Device not ready for flash mode");
+      return;
     }
+    await connection.enterDfuMode();
   });
 
   ipcMain.handle("disconnect-from-device", async (_event, path: string) => {
@@ -84,6 +69,39 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       throw error;
     }
   });
+}
+
+async function connectToDevice(path: string) {
+  try {
+    const client = new Client();
+    try {
+      if (connection) {
+        await connection.disconnect();
+        connection = undefined;
+      }
+    } catch (error) {
+      console.error(`Error closing serial port ${path}:`, error);
+      throw error;
+    }
+    connection = client.createElectronSerialConnection();
+    connection.events.onFromRadio.subscribe((packet: any) => {
+      if (packet?.payloadVariant?.case === "configCompleteId") {
+        canEnterFlashMode = true;
+      }
+    });
+    connection.events.onDeviceMetadataPacket.subscribe((packet: any) => {
+      _mainWindow.webContents.send("on-device-metadata", packet);
+    });
+    await connection.connect({
+      path,
+      baudRate: 115200,
+      concurrentLogOutput: false,
+    });
+    console.log("connect-to-device");
+  } catch (error) {
+    console.error(`Error opening serial port ${path}:`, error);
+    throw error;
+  }
 }
 
 async function getDeviceNameForMacOS(

@@ -16,6 +16,7 @@ declare global {
     apiRequest: (url: string) => Promise<any>;
     onDeviceMetadata: (callback: (data: any) => void) => void;
     getAssetPath: (assetName: string) => string;
+    enterDfuMode: () => Promise<void>;
   }
 
   interface SerialPortInfo {

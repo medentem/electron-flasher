@@ -1,7 +1,33 @@
 // src/components/Navbar.tsx
-import Steps from "./Steps";
+import { useDeviceStore } from "../stores/deviceStore";
+import Steps, { type Step } from "./Steps";
 
 export default function Navbar() {
+  const connectedDevice = useDeviceStore((state) => state.connectedDevice);
+  const isUpdating = useDeviceStore((state) => state.isUpdating);
+  const isScanning = useDeviceStore((state) => state.isScanning);
+  const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
+  const steps: Step[] = [
+    {
+      name: "Connect",
+      status: connectedDevice ? "complete" : "current",
+      shouldAnimate: isScanning,
+    },
+    {
+      name: "Update",
+      status: finishedUpdate
+        ? "complete"
+        : connectedDevice
+          ? "current"
+          : "upcoming",
+      shouldAnimate: isUpdating,
+    },
+    {
+      name: "Done",
+      status: finishedUpdate ? "complete" : "upcoming",
+      shouldAnimate: false,
+    },
+  ];
   return (
     <header className="border-b-slate-700 border-b-2 text-white">
       <nav
@@ -18,7 +44,7 @@ export default function Navbar() {
             />
           </div>
         </div>
-        <Steps />
+        <Steps steps={steps} />
         <div className="flex-0">
           <div className="-m-1.5 p-1.5" />
         </div>
