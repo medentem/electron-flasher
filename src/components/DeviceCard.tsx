@@ -4,11 +4,13 @@ import type { DeviceHardware } from "src/types/api";
 import { OfflineHardwareList } from "../types/resources";
 import type * as Protobuf from '@meshtastic/protobufs';
 
+
 export default function DeviceCard() {
   const [ports, setPorts] = useState<SerialPortInfo[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Protobuf.Mesh.DeviceMetadata | undefined>();
   const [connectedTarget, setConnectedTarget] = useState<DeviceHardware | undefined>();
   const [meshDevicePort, setMeshDevicePort] = useState<SerialPortInfo>(undefined);
+  const [deviceImage, setDeviceImage] = useState<any | undefined>();
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [targets, setTargets] = useState<DeviceHardware[]>([]);
@@ -48,6 +50,13 @@ export default function DeviceCard() {
       console.log(connectedDevice);
       const target = targets.find(x => x.hwModel === connectedDevice.hwModel);
       if (target) {
+        try {
+          const deviceImage = `https://wismesh.org/images/devices/${target.displayName.replaceAll(' ', '_').toUpperCase()}.png`;
+          setDeviceImage(deviceImage);
+        } catch (e){
+          console.log("Error loading image: ");
+          console.log(e);
+        }
         setConnectedTarget(target);
       }
     }
@@ -115,13 +124,13 @@ export default function DeviceCard() {
             }
           </div>
         </div>
-        <div className="sm:flex animate-pulse">
+        <div className={`sm:flex ${!connectedTarget ? 'animate-pulse' : ''}`}>
           <div className="mb-4 flex-shrink-0 sm:mb-0 sm:mr-4">
-            <div className="flex items-center justify-center w-full h-32 bg-gray-300 rounded sm:w-32 dark:bg-gray-700">
-              {connectedTarget &&
-                <img src={`$assets/images/devices/${connectedTarget.displayName.replace(' ', '_').toUpperCase()}.png`} alt="device-iamge" />
+            <div className="flex items-center justify-center w-full h-32 bg-gray-300 rounded sm:w-32 dark:bg-gray-700 overflow-hidden" >
+              {deviceImage &&
+                <img className="object-fill" src={deviceImage} alt="device-iamge" />
               }
-              {!connectedTarget &&
+              {!deviceImage &&
                 <svg
                   className="w-10 h-10 text-gray-200 dark:text-gray-600"
                   aria-hidden="true"

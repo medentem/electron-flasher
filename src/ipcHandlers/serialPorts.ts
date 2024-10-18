@@ -6,7 +6,7 @@ import { exec } from "node:child_process";
 import wmi from 'node-wmi';
 import plist from 'plist';
 import type { BrowserWindow } from "electron/main";
-import { Client, ElectronSerialConnection } from '@meshtastic/js';
+import { Client, type ElectronSerialConnection } from '@meshtastic/js';
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
@@ -60,7 +60,10 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle("disconnect-from-device", async (_event, path: string) => {
     try {
-      console.log("disconnect-from-device");
+      if (connection) {
+        await connection.disconnect();
+        connection = undefined;
+      }
     } catch (error) {
       console.error(`Error closing serial port ${path}:`, error);
       throw error;
