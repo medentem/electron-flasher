@@ -3,10 +3,10 @@
 import { ipcMain } from "electron";
 import { SerialPort } from "serialport";
 import { exec } from "node:child_process";
-import wmi from 'node-wmi';
-import plist from 'plist';
+import wmi from "node-wmi";
+import plist from "plist";
 import type { BrowserWindow } from "electron/main";
-import { Client, type ElectronSerialConnection } from '@meshtastic/js';
+import { Client, type ElectronSerialConnection } from "@meshtastic/js";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
@@ -19,15 +19,17 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       const ports = await SerialPort.list();
       const enrichedPorts = await Promise.all(
         ports.map(async (port) => {
-          let deviceName = 'Unknown Device';
+          let deviceName = "Unknown Device";
           if (process.platform === "darwin") {
             console.info("OSX detected - getting additional information.");
             deviceName = await getDeviceNameForMacOS(port.serialNumber);
           } else if (process.platform === "win32") {
             const wmiData = await getWmiDeviceInfo();
-            const wmiDevice = wmiData.find((device) => device.PNPDeviceID === port.pnpId);
+            const wmiDevice = wmiData.find(
+              (device) => device.PNPDeviceID === port.pnpId,
+            );
             if (wmiDevice) {
-                deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
+              deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
             }
           }
           return {
@@ -57,9 +59,13 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       }
       connection = client.createElectronSerialConnection();
       connection.events.onDeviceMetadataPacket.subscribe((packet: any) => {
-        _mainWindow.webContents.send('on-device-metadata', packet);
+        _mainWindow.webContents.send("on-device-metadata", packet);
       });
-      await connection.connect({path, baudRate: 115200, concurrentLogOutput: false});
+      await connection.connect({
+        path,
+        baudRate: 115200,
+        concurrentLogOutput: false,
+      });
       console.log("connect-to-device");
     } catch (error) {
       console.error(`Error opening serial port ${path}:`, error);
@@ -96,49 +102,52 @@ async function getDeviceNameForMacOS(
         const deviceName = findDeviceNameInIORegData(data, portSerial);
         resolve(deviceName);
       } catch (parseError) {
-        console.error('Error parsing ioreg output:', parseError);
+        console.error("Error parsing ioreg output:", parseError);
         resolve(undefined);
       }
     });
   });
 }
 
-function findDeviceNameInIORegData(data: any, portSerial: string): string | undefined {
-    if (Array.isArray(data)) {
-      for (const item of data) {
-        const result = findDeviceNameInIORegData(item, portSerial);
-        if (result) {
-          return result;
-        }
-      }
-    } else if (typeof data === 'object' && data !== null) {
-      if (data.kUSBSerialNumberString === portSerial) {
-        return data['USB Product Name'] || data.kUSBProductString;
-      }
-      for (const key of Object.keys(data)) {
-        const result = findDeviceNameInIORegData(data[key], portSerial);
-        if (result) {
-          return result;
-        }
+function findDeviceNameInIORegData(
+  data: any,
+  portSerial: string,
+): string | undefined {
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const result = findDeviceNameInIORegData(item, portSerial);
+      if (result) {
+        return result;
       }
     }
-    return undefined;
+  } else if (typeof data === "object" && data !== null) {
+    if (data.kUSBSerialNumberString === portSerial) {
+      return data["USB Product Name"] || data.kUSBProductString;
+    }
+    for (const key of Object.keys(data)) {
+      const result = findDeviceNameInIORegData(data[key], portSerial);
+      if (result) {
+        return result;
+      }
+    }
   }
-  
-  async function getWmiDeviceInfo(): Promise<any[]> {
-    return new Promise((resolve) => {
-      wmi.Query(
-        {
-          class: 'Win32_SerialPort',
-        },
-        (err: any, result: any[]) => {
-          if (err) {
-            console.error('Error querying WMI:', err);
-            resolve([]);
-          } else {
-            resolve(result);
-          }
+  return undefined;
+}
+
+async function getWmiDeviceInfo(): Promise<any[]> {
+  return new Promise((resolve) => {
+    wmi.Query(
+      {
+        class: "Win32_SerialPort",
+      },
+      (err: any, result: any[]) => {
+        if (err) {
+          console.error("Error querying WMI:", err);
+          resolve([]);
+        } else {
+          resolve(result);
         }
-      );
-    });
-  }
+      },
+    );
+  });
+}

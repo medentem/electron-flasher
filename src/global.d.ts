@@ -1,10 +1,9 @@
 export {};
 
 declare global {
-
-interface Navigator {
+  interface Navigator {
     serial: any;
-}
+  }
 
   interface Window {
     electronAPI: IElectronAPI;

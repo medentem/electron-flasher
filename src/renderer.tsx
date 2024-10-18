@@ -25,10 +25,12 @@
  *  });
  * ```
  */
-console.log('👋 This message is being logged by "renderer.ts", included via Vite');
+console.log(
+  '👋 This message is being logged by "renderer.ts", included via Vite',
+);
 
-import './index.css';
+import "./index.css";
 import { createRoot } from "react-dom/client";
-import App from './App';
+import App from "./App";
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById("root")).render(<App />);
