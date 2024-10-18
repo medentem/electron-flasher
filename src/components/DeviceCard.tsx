@@ -14,7 +14,7 @@ export default function DeviceCard() {
   const [isScanning, setIsScanning] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [targets, setTargets] = useState<DeviceHardware[]>([]);
-  const firmwareApi = createUrl("api/resource/deviceHardware");
+  const getDeviceHardwareApi = createUrl("api/resource/deviceHardware");
 
   const fetchPorts = async () => {
     const portsList = await window.electronAPI.getSerialPorts();
@@ -27,6 +27,8 @@ export default function DeviceCard() {
 
   useEffect(() => {
     if (ports && ports.length > 0 && targets && targets.length > 0) {
+      // Find the first PORT that matches ANY of the known meshtastic device characteristics (platformio, name, architecture)
+      // We're using a metal detector on hackstack to find the needle here
       const matchingPort = ports.find(x => {
           const matchingTargets = targets.find(y => {
             const deviceNameLower = x.deviceName?.toLowerCase();
@@ -36,6 +38,7 @@ export default function DeviceCard() {
          }
       );
       setMeshDevicePort(matchingPort);
+      // If we found a port that is likely to be a meshtastic device, connect to it to extract DeviceMetadata
       if (matchingPort) {
         window.electronAPI.onDeviceMetadata((data) => {
           setConnectedDevice(data.data as Protobuf.Mesh.DeviceMetadata);
@@ -48,6 +51,8 @@ export default function DeviceCard() {
   useEffect(() => {
     if (connectedDevice) {
       console.log(connectedDevice);
+      // Now that we've successfully connected to the device, and we have the DeviceMetadata,
+      // we can go back into the targets and ensure we have the exact target this device is
       const target = targets.find(x => x.hwModel === connectedDevice.hwModel);
       if (target) {
         try {
@@ -81,7 +86,7 @@ export default function DeviceCard() {
   const fetchDeviceList = async () => {
     try {
       const result: DeviceHardware[] =
-        await window.electronAPI.apiRequest(firmwareApi);
+        await window.electronAPI.apiRequest(getDeviceHardwareApi);
         setTargets(result.filter((t: DeviceHardware) => t.activelySupported));
     } catch (ex) {
       console.error(ex);
