@@ -2,6 +2,7 @@ import { app, BrowserWindow } from "electron";
 import { registerSerialPortHandlers } from "./ipcHandlers/serialPorts";
 import { registerApiHandlers } from "./ipcHandlers/api";
 import path from "node:path";
+import { registerFileSystemHandlers } from "./ipcHandlers/fileSystem";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -41,6 +42,7 @@ const createWindow = () => {
 app.on("ready", () => {
   registerApiHandlers();
   createWindow();
+  registerFileSystemHandlers(mainWindow);
   registerSerialPortHandlers(mainWindow);
 });
 

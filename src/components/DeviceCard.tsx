@@ -10,13 +10,14 @@ export default function DeviceCard() {
   const connectedDevice = useDeviceStore((state) => state.connectedDevice);
   const setSelectedPort = useDeviceStore((state) => state.setSelectedPort);
   const deviceImage = useDeviceStore((state) => state.deviceImage);
+  const isScanning = useDeviceStore((state) => state.isScanning);
+  const isUpdating = useDeviceStore((state) => state.isUpdating);
+  const updateDevice = useDeviceStore((state) => state.updateDevice);
   const setConnectedDevice = useDeviceStore(
     (state) => state.setConnectedDevice,
   );
   const fetchDeviceList = useDeviceStore((state) => state.fetchDeviceList);
   const fetchPorts = useDeviceStore((state) => state.fetchPorts);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchDeviceList();
@@ -58,16 +59,7 @@ export default function DeviceCard() {
       await window.electronAPI.disconnectFromDevice(selectedPort.path);
       setSelectedPort(undefined);
     }
-    setIsScanning(true);
-    fetchPorts().then(() => {
-      setIsScanning(false);
-    });
-  };
-
-  const updateDevice = async () => {
-    console.log("update");
-    setIsUpdating(true);
-    await window.electronAPI.enterDfuMode();
+    await fetchPorts();
   };
 
   return (

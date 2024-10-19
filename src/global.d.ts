@@ -1,4 +1,4 @@
-export {};
+import type { Drive } from "drivelist";
 
 declare global {
   interface Navigator {
@@ -17,6 +17,7 @@ declare global {
     onDeviceMetadata: (callback: (data: any) => void) => void;
     getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
+    getDrives: () => Promise<Drive[]>;
   }
 
   interface SerialPortInfo {

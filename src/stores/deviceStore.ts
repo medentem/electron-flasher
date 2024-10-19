@@ -3,6 +3,7 @@ import { createUrl } from "../utils/api";
 import type { DeviceHardware } from "src/types/api";
 import { OfflineHardwareList } from "../types/resources";
 import type * as Protobuf from "@meshtastic/protobufs";
+import { sleep } from "../utils/promise";
 
 interface DeviceState {
   connectedDevice: Protobuf.Mesh.DeviceMetadata | undefined;
@@ -19,6 +20,7 @@ interface DeviceState {
   setSelectedPort: (value: SerialPortInfo) => void;
   fetchDeviceList: () => Promise<void>;
   fetchPorts: () => Promise<void>;
+  updateDevice: () => Promise<void>;
 }
 
 export const useDeviceStore = create<DeviceState>((set, _get) => ({
@@ -76,5 +78,13 @@ export const useDeviceStore = create<DeviceState>((set, _get) => ({
     set({ isScanning: true });
     const portsList = await window.electronAPI.getSerialPorts();
     set({ availablePorts: portsList, isScanning: false });
+  },
+  updateDevice: async () => {
+    const driveListBefore = await window.electronAPI.getDrives();
+    console.log(driveListBefore);
+    await window.electronAPI.enterDfuMode();
+    await sleep(10000);
+    const driveListAfter = await window.electronAPI.getDrives();
+    console.log(driveListAfter);
   },
 }));

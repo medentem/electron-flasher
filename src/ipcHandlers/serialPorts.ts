@@ -55,7 +55,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       console.error("Device not ready for flash mode");
       return;
     }
-    await connection.enterDfuMode();
+    connection.enterDfuMode();
   });
 
   ipcMain.handle("disconnect-from-device", async (_event, path: string) => {
