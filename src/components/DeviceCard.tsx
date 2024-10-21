@@ -12,6 +12,7 @@ export default function DeviceCard() {
   const deviceImage = useDeviceStore((state) => state.deviceImage);
   const isScanning = useDeviceStore((state) => state.isScanning);
   const isUpdating = useDeviceStore((state) => state.isUpdating);
+  const progressMessage = useDeviceStore((state) => state.progressMessage);
   const updateDevice = useDeviceStore((state) => state.updateDevice);
   const setConnectedDevice = useDeviceStore(
     (state) => state.setConnectedDevice,

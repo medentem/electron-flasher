@@ -17,7 +17,7 @@ declare global {
     onDeviceMetadata: (callback: (data: any) => void) => void;
     getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
-    getDrives: () => Promise<Drive[]>;
+    getDrives: (requestId: string) => Promise<Drive[]>;
   }
 
   interface SerialPortInfo {

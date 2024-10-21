@@ -5,6 +5,7 @@ import Steps, { type Step } from "./Steps";
 export default function Navbar() {
   const connectedDevice = useDeviceStore((state) => state.connectedDevice);
   const isUpdating = useDeviceStore((state) => state.isUpdating);
+  const progressMessage = useDeviceStore((state) => state.progressMessage);
   const isScanning = useDeviceStore((state) => state.isScanning);
   const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
   const steps: Step[] = [
@@ -45,6 +46,7 @@ export default function Navbar() {
           </div>
         </div>
         <Steps steps={steps} />
+        {progressMessage && <span className="text-xs">{progressMessage}</span>}
         <div className="flex-0">
           <div className="-m-1.5 p-1.5" />
         </div>
