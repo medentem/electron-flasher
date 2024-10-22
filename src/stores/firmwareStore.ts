@@ -19,7 +19,6 @@ export const useFirmwareStore = create<FirmwareState>((set, _get) => ({
       await window.electronAPI.apiRequest<FirmwareReleases>(
         createUrl("api/github/firmware/list"),
       );
-    console.log(result);
 
     // Only grab the latest 4 releases
     const stable = result.releases.stable.slice(0, 3);

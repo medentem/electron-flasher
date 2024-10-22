@@ -15,6 +15,7 @@ export default function Releases() {
     (state) => state.getFirmwareReleases,
   );
   const [firmwares, setFirmwares] = useState<FirmwareResource[]>([]);
+  const [selectedIdx, setSelectedIdx] = useState<number>();
 
   useEffect(() => {
     getFirmwareReleases();
@@ -27,7 +28,6 @@ export default function Releases() {
           ...x,
           classNames: "bg-red-500",
           type: "preview",
-          selected: false,
           isLatest: false,
         };
       }),
@@ -36,7 +36,6 @@ export default function Releases() {
           ...x,
           classNames: "bg-orange-500",
           type: "alpha",
-          selected: false,
           isLatest: false,
         };
       }),
@@ -44,7 +43,6 @@ export default function Releases() {
         ...stableFirmwareReleases[0],
         classNames: "bg-meshtastic-green",
         type: "stable",
-        selected: true,
         isLatest: true,
       },
       ...stableFirmwareReleases.slice(1).map((x) => {
@@ -52,11 +50,15 @@ export default function Releases() {
           ...x,
           classNames: "bg-meshtastic-green",
           type: "stable",
-          selected: false,
           isLatest: false,
         };
       }),
     ];
+    if (stableFirmwareReleases && stableFirmwareReleases.length > 0) {
+      setSelectedIdx(
+        firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
+      );
+    }
     setFirmwares(firmwares);
   }, [stableFirmwareReleases, alphaFirmwareReleases, previewFirmwareReleases]);
 
@@ -76,7 +78,11 @@ export default function Releases() {
       </div>
       <ul className="overflow-scroll">
         {firmwares.map((item, itemIdx) => (
-          <li key={`${item.id}-${item.isLatest}`}>
+          // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+          <li
+            key={`${item.id}-${item.isLatest}`}
+            onClick={() => setSelectedIdx(itemIdx)}
+          >
             <div className="relative">
               {itemIdx !== firmwares.length - 1 ? (
                 <span
@@ -85,7 +91,7 @@ export default function Releases() {
                 />
               ) : null}
               <div
-                className={`p-4 relative flex space-x-3 hover:bg-gray-200 ${item.selected ? "border-2 border-meshtastic-green" : ""}`}
+                className={`p-4 relative flex space-x-3 hover:bg-gray-200 ${itemIdx === selectedIdx ? "border-2 border-meshtastic-green" : ""}`}
               >
                 <div>
                   <span

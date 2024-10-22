@@ -50,7 +50,6 @@ declare global {
     release_notes?: string;
     classNames: string;
     type: string;
-    selected: boolean;
     isLatest: boolean;
   }
 
