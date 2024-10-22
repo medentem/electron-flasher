@@ -132,7 +132,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
 
     set({
       progressMessage:
-        "Waiting for device to reattach. This may take several seconds.",
+        "Preparing device for update. This may take several seconds.",
     });
     await sleep(5000);
 
@@ -177,7 +177,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     set({
       isUpdating: false,
       finishedUpdate: true,
-      progressMessage: "Update complete. Reboot your device.",
+      progressMessage: "Update complete. Unplug & Reboot your device.",
     });
   },
 }));
