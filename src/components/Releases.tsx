@@ -22,44 +22,46 @@ export default function Releases() {
   }, [getFirmwareReleases]);
 
   useEffect(() => {
-    const firmwares = [
-      ...previewFirmwareReleases.map((x) => {
-        return {
-          ...x,
-          classNames: "bg-red-500",
-          type: "preview",
-          isLatest: false,
-        };
-      }),
-      ...alphaFirmwareReleases.map((x) => {
-        return {
-          ...x,
-          classNames: "bg-orange-500",
-          type: "alpha",
-          isLatest: false,
-        };
-      }),
-      {
-        ...stableFirmwareReleases[0],
-        classNames: "bg-meshtastic-green",
-        type: "stable",
-        isLatest: true,
-      },
-      ...stableFirmwareReleases.slice(1).map((x) => {
-        return {
-          ...x,
+    if (stableFirmwareReleases.length > 0 && alphaFirmwareReleases.length > 0) {
+      const firmwares = [
+        ...previewFirmwareReleases.map((x) => {
+          return {
+            ...x,
+            classNames: "bg-red-500",
+            type: "preview",
+            isLatest: false,
+          };
+        }),
+        ...alphaFirmwareReleases.map((x) => {
+          return {
+            ...x,
+            classNames: "bg-orange-500",
+            type: "alpha",
+            isLatest: false,
+          };
+        }),
+        {
+          ...stableFirmwareReleases[0],
           classNames: "bg-meshtastic-green",
           type: "stable",
-          isLatest: false,
-        };
-      }),
-    ];
-    if (stableFirmwareReleases && stableFirmwareReleases.length > 0) {
-      setSelectedIdx(
-        firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
-      );
+          isLatest: true,
+        },
+        ...stableFirmwareReleases.slice(1).map((x) => {
+          return {
+            ...x,
+            classNames: "bg-meshtastic-green",
+            type: "stable",
+            isLatest: false,
+          };
+        }),
+      ];
+      if (stableFirmwareReleases && stableFirmwareReleases.length > 0) {
+        setSelectedIdx(
+          firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
+        );
+      }
+      setFirmwares(firmwares);
     }
-    setFirmwares(firmwares);
   }, [stableFirmwareReleases, alphaFirmwareReleases, previewFirmwareReleases]);
 
   return (
