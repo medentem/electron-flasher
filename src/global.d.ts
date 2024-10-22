@@ -48,6 +48,10 @@ declare global {
     page_url?: string;
     zip_url?: string;
     release_notes?: string;
+    classNames: string;
+    type: string;
+    selected: boolean;
+    isLatest: boolean;
   }
 
   interface FirmwareReleases {

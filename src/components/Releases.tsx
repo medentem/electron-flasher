@@ -1,6 +1,7 @@
 import { useFirmwareStore } from "../stores/firmwareStore";
 import MeshtasticIcon from "./MeshtasticIcon";
 import { FolderPlusIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState } from "react";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -10,42 +11,55 @@ export default function Releases() {
   const stableFirmwareReleases = useFirmwareStore((state) => state.stable);
   const alphaFirmwareReleases = useFirmwareStore((state) => state.alpha);
   const previewFirmwareReleases = useFirmwareStore((state) => state.previews);
-  const firmwares = [
-    ...previewFirmwareReleases.map((x) => {
-      return {
-        ...x,
-        classNames: "bg-red-500",
-        type: "preview",
-        selected: false,
-        isLatest: false,
-      };
-    }),
-    ...alphaFirmwareReleases.map((x) => {
-      return {
-        ...x,
-        classNames: "bg-orange-500",
-        type: "alpha",
-        selected: false,
-        isLatest: false,
-      };
-    }),
-    {
-      ...stableFirmwareReleases[0],
-      classNames: "bg-meshtastic-green",
-      type: "stable",
-      selected: true,
-      isLatest: true,
-    },
-    ...stableFirmwareReleases.slice(1).map((x) => {
-      return {
-        ...x,
+  const getFirmwareReleases = useFirmwareStore(
+    (state) => state.getFirmwareReleases,
+  );
+  const [firmwares, setFirmwares] = useState<FirmwareResource[]>([]);
+
+  useEffect(() => {
+    getFirmwareReleases();
+  }, [getFirmwareReleases]);
+
+  useEffect(() => {
+    const firmwares = [
+      ...previewFirmwareReleases.map((x) => {
+        return {
+          ...x,
+          classNames: "bg-red-500",
+          type: "preview",
+          selected: false,
+          isLatest: false,
+        };
+      }),
+      ...alphaFirmwareReleases.map((x) => {
+        return {
+          ...x,
+          classNames: "bg-orange-500",
+          type: "alpha",
+          selected: false,
+          isLatest: false,
+        };
+      }),
+      {
+        ...stableFirmwareReleases[0],
         classNames: "bg-meshtastic-green",
         type: "stable",
-        selected: false,
-        isLatest: false,
-      };
-    }),
-  ];
+        selected: true,
+        isLatest: true,
+      },
+      ...stableFirmwareReleases.slice(1).map((x) => {
+        return {
+          ...x,
+          classNames: "bg-meshtastic-green",
+          type: "stable",
+          selected: false,
+          isLatest: false,
+        };
+      }),
+    ];
+    setFirmwares(firmwares);
+  }, [stableFirmwareReleases, alphaFirmwareReleases, previewFirmwareReleases]);
+
   return (
     <div className="flow-root">
       <div className="border-b border-gray-200 py-2">
@@ -62,7 +76,7 @@ export default function Releases() {
       </div>
       <ul className="overflow-scroll">
         {firmwares.map((item, itemIdx) => (
-          <li key={item.id}>
+          <li key={`${item.id}-${item.isLatest}`}>
             <div className="relative">
               {itemIdx !== firmwares.length - 1 ? (
                 <span
@@ -88,7 +102,7 @@ export default function Releases() {
                 </div>
                 <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                   <div>
-                    <p className="text-sm text-gray-500">{item.title}</p>
+                    <p className="text-sm text-gray-500">{item.id}</p>
                     <p className="text-xs italic text-gray-500">
                       {item.type === "alpha" || item.type === "preview"
                         ? "Pre-release"

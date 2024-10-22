@@ -5,5 +5,7 @@ export function createUrl(relativeUrl: string) {
     relativeUrl = relativeUrl.replace("api/", "");
   }
   const base = `${window.location.protocol}//${host}`;
-  return `${base}/${relativeUrl}`;
+  const fullUrl = `${base}/${relativeUrl}`;
+  console.info(`API URL: ${fullUrl}`);
+  return fullUrl;
 }
