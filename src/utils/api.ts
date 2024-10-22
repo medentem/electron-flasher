@@ -1,10 +1,9 @@
 export function createUrl(relativeUrl: string) {
   let host = window.location.host;
-  if (process.env.NODE_ENV !== "development" && relativeUrl.startsWith("api")) {
+  if (relativeUrl.startsWith("api")) {
     host = "api.meshtastic.org";
     relativeUrl = relativeUrl.replace("api/", "");
   }
   const base = `${window.location.protocol}//${host}`;
-  console.log(`${base}/${relativeUrl}`);
   return `${base}/${relativeUrl}`;
 }
