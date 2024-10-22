@@ -21,7 +21,12 @@ npm install
 ## Usage
 
 ```sh
-npm start
+npm run start
+```
+
+## Electron Debugging
+```sh
+export ELECTRON_ENABLE_LOGGING=true
 ```
 
 ## Author
