@@ -18,6 +18,7 @@ interface DeviceState {
   finishedUpdate: boolean;
   deviceImage: string | undefined;
   progressMessage: string | undefined;
+  cleanupPostUpdate: () => void;
   isUF2: () => boolean;
   isESP32: () => boolean;
   setConnectedDevice: (value: Protobuf.Mesh.DeviceMetadata) => void;
@@ -27,6 +28,7 @@ interface DeviceState {
   fetchPorts: () => Promise<void>;
   updateDevice: () => Promise<void>;
   startUF2Update: () => Promise<void>;
+  getUF2FirmwareFileName: () => string;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -40,6 +42,19 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   isScanning: false,
   finishedUpdate: false,
   progressMessage: undefined,
+  cleanupPostUpdate: () => {
+    set({
+      connectedDevice: undefined,
+      connectedTarget: undefined,
+      selectedPort: undefined,
+      deviceImage: undefined,
+      isUpdating: false,
+      isScanning: false,
+    });
+  },
+  getUF2FirmwareFileName: () => {
+    return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.uf2`;
+  },
   isUF2: () => {
     return (
       get().connectedTarget &&
@@ -69,7 +84,6 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   setSelectedPort: (value: SerialPortInfo) => {
     set({ selectedPort: value });
   },
-  clearState: set({} as DeviceState, true),
   fetchDeviceList: async () => {
     try {
       const result: DeviceHardware[] = await window.electronAPI.apiRequest<
@@ -135,16 +149,35 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
         driveListBefore.find((y) => x.devicePath === y.devicePath) === undefined
       );
     });
+
+    // TODO: Error state
+    if (!meshDevice) {
+      return;
+    }
+
     set({ progressMessage: "Starting firmware download." });
     console.info(`DFU Device Detected: ${JSON.stringify(meshDevice)}`);
 
     // Download firmware to temp dir
-    const selectedFirmware = useFirmwareStore.getState().selectedFirmware;
-    await window.electronAPI.downloadFirmware(
-      getCorsFriendyReleaseUrl(selectedFirmware.zip_url),
-    );
+    const fileName = get().getUF2FirmwareFileName();
+    const firmwareDownloadUrl = useFirmwareStore
+      .getState()
+      .getFirmwareDownloadUrl(fileName);
+    const fileInfo =
+      await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+
     set({ progressMessage: "Copying firmware." });
 
-    set({ isUpdating: false, progressMessage: undefined });
+    await window.electronAPI.copyFirmware(
+      fileInfo.fileName,
+      fileInfo.fullPath,
+      meshDevice.mountpoints[0].path,
+    );
+
+    set({
+      isUpdating: false,
+      finishedUpdate: true,
+      progressMessage: "Update complete. Reboot your device.",
+    });
   },
 }));

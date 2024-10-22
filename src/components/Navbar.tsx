@@ -45,8 +45,12 @@ export default function Navbar() {
             />
           </div>
         </div>
-        <Steps steps={steps} />
-        {progressMessage && <span className="text-xs">{progressMessage}</span>}
+        <div className="flex flex-col">
+          <Steps steps={steps} />
+          {progressMessage && (
+            <span className="text-xs text-center">{progressMessage}</span>
+          )}
+        </div>
         <div className="flex-0">
           <div className="-m-1.5 p-1.5" />
         </div>

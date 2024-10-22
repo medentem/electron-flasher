@@ -18,7 +18,7 @@ declare global {
     getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
     getDrives: (requestId: string) => Promise<Drive[]>;
-    downloadFirmware: (fileUrl: string) => Promise<void>;
+    downloadFirmware: (fileUrl: string) => Promise<FileInfo>;
     copyFirmware: (
       fileName: string,
       fromPath: string,

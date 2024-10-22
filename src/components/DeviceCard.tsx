@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type * as Protobuf from "@meshtastic/protobufs";
 import { useDeviceStore } from "../stores/deviceStore";
+import { sleep } from "../utils/promise";
 
 export default function DeviceCard() {
   const availablePorts = useDeviceStore((state) => state.availablePorts);
@@ -12,17 +13,27 @@ export default function DeviceCard() {
   const deviceImage = useDeviceStore((state) => state.deviceImage);
   const isScanning = useDeviceStore((state) => state.isScanning);
   const isUpdating = useDeviceStore((state) => state.isUpdating);
-  const progressMessage = useDeviceStore((state) => state.progressMessage);
+  const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
   const updateDevice = useDeviceStore((state) => state.updateDevice);
   const setConnectedDevice = useDeviceStore(
     (state) => state.setConnectedDevice,
   );
   const fetchDeviceList = useDeviceStore((state) => state.fetchDeviceList);
   const fetchPorts = useDeviceStore((state) => state.fetchPorts);
+  const cleanupPostUpdate = useDeviceStore((state) => state.cleanupPostUpdate);
 
   useEffect(() => {
     fetchDeviceList();
   }, [fetchDeviceList]);
+
+  useEffect(() => {
+    if (finishedUpdate) {
+      cleanupPostUpdate();
+      sleep(1500).then(() => {
+        scanForDevice();
+      });
+    }
+  }, [cleanupPostUpdate, finishedUpdate]);
 
   useEffect(() => {
     if (
@@ -83,7 +94,7 @@ export default function DeviceCard() {
                 {isScanning ? "Scanning..." : "Scan For Device"}
               </button>
             )}
-            {connectedDevice && (
+            {connectedDevice && !finishedUpdate && (
               <button
                 type="button"
                 className={`inline-flex items-center rounded-md ${isUpdating ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm `}
@@ -91,6 +102,16 @@ export default function DeviceCard() {
                 disabled={isUpdating}
               >
                 {isUpdating ? "Updating..." : "Update Device"}
+              </button>
+            )}
+            {connectedDevice && finishedUpdate && (
+              <button
+                type="button"
+                className={`inline-flex items-center rounded-md ${finishedUpdate ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm `}
+                onClick={updateDevice}
+                disabled={finishedUpdate}
+              >
+                Done
               </button>
             )}
           </div>

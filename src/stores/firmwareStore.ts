@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createUrl } from "../utils/api";
+import { getCorsFriendyReleaseUrl } from "../types/api";
 
 interface FirmwareState {
   stable: FirmwareResource[];
@@ -11,6 +12,7 @@ interface FirmwareState {
   setSelectedFirmware: (selectedFirmwareId: string) => void;
   setFirmwareRollup: (firmwareRollup: FirmwareResource[]) => void;
   getFirmwareReleases: () => Promise<void>;
+  getFirmwareDownloadUrl: (fileName: string) => string;
 }
 
 export const useFirmwareStore = create<FirmwareState>((set, get) => ({
@@ -51,5 +53,11 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
       previews: previews,
       pullRequests: pullRequests,
     });
+  },
+  getFirmwareDownloadUrl: (fileName: string) => {
+    // Download firmware to temp dir
+    const selectedFirmware = get().selectedFirmware;
+    const firmwareDownloadUrl = `${getCorsFriendyReleaseUrl(selectedFirmware.zip_url)}/${fileName}`;
+    return firmwareDownloadUrl;
   },
 }));

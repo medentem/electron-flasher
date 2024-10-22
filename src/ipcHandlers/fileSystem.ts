@@ -18,11 +18,11 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle("download-firmware", async (_event: any, fileUrl: string) => {
     // Create a temporary file path
+    console.info(`Downloading firmware from ${fileUrl}`);
     const tempDir = os.tmpdir();
     const urlPath = new URL(fileUrl).pathname;
-    console.log(fileUrl);
-    console.log(urlPath);
     let fileName = path.basename(urlPath);
+    console.info(`Filename: ${fileName}`);
 
     // If the URL does not contain a filename, assign a default one
     if (!fileName || fileName.length === 0) {
@@ -30,6 +30,7 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     }
 
     const tempFilePath = path.join(tempDir, fileName);
+    console.info(`Downloading firmware to ${tempFilePath}`);
 
     // Download the file
     const response = await axios({
