@@ -82,6 +82,7 @@ export default function Releases() {
         {firmwares.map((item, itemIdx) => (
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <li
+            className="cursor-pointer"
             key={`${item.id}-${item.isLatest}`}
             onClick={() => setSelectedIdx(itemIdx)}
           >
