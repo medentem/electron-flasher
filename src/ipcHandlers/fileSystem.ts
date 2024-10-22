@@ -20,6 +20,8 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     // Create a temporary file path
     const tempDir = os.tmpdir();
     const urlPath = new URL(fileUrl).pathname;
+    console.log(fileUrl);
+    console.log(urlPath);
     let fileName = path.basename(urlPath);
 
     // If the URL does not contain a filename, assign a default one

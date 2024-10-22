@@ -11,13 +11,16 @@ export default function Releases() {
   const stableFirmwareReleases = useFirmwareStore((state) => state.stable);
   const alphaFirmwareReleases = useFirmwareStore((state) => state.alpha);
   const previewFirmwareReleases = useFirmwareStore((state) => state.previews);
-  const setSelectedFirmwareId = useFirmwareStore(
-    (state) => state.setSelectedFirmwareId,
+  const setSelectedFirmware = useFirmwareStore(
+    (state) => state.setSelectedFirmware,
   );
   const getFirmwareReleases = useFirmwareStore(
     (state) => state.getFirmwareReleases,
   );
-  const [firmwares, setFirmwares] = useState<FirmwareResource[]>([]);
+  const firmwareRollup = useFirmwareStore((state) => state.firmwareRollup);
+  const setFirmwareRollup = useFirmwareStore(
+    (state) => state.setFirmwareRollup,
+  );
   const [selectedIdx, setSelectedIdx] = useState<number>();
 
   useEffect(() => {
@@ -25,10 +28,10 @@ export default function Releases() {
   }, [getFirmwareReleases]);
 
   useEffect(() => {
-    if (selectedIdx && firmwares && firmwares.length > 0) {
-      setSelectedFirmwareId(firmwares[selectedIdx].id);
+    if (selectedIdx && firmwareRollup && firmwareRollup.length > 0) {
+      setSelectedFirmware(firmwareRollup[selectedIdx].id);
     }
-  }, [selectedIdx, setSelectedFirmwareId, firmwares]);
+  }, [selectedIdx, setSelectedFirmware, firmwareRollup]);
 
   useEffect(() => {
     if (stableFirmwareReleases.length > 0 && alphaFirmwareReleases.length > 0) {
@@ -64,12 +67,12 @@ export default function Releases() {
           };
         }),
       ];
+      setFirmwareRollup(firmwares);
       if (stableFirmwareReleases && stableFirmwareReleases.length > 0) {
         setSelectedIdx(
           firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
         );
       }
-      setFirmwares(firmwares);
     }
   }, [stableFirmwareReleases, alphaFirmwareReleases, previewFirmwareReleases]);
 
@@ -88,7 +91,7 @@ export default function Releases() {
         </div>
       </div>
       <ul className="overflow-scroll">
-        {firmwares.map((item, itemIdx) => (
+        {firmwareRollup.map((item, itemIdx) => (
           // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
           <li
             className="cursor-pointer"
@@ -96,7 +99,7 @@ export default function Releases() {
             onClick={() => setSelectedIdx(itemIdx)}
           >
             <div className="relative">
-              {itemIdx !== firmwares.length - 1 ? (
+              {itemIdx !== firmwareRollup.length - 1 ? (
                 <span
                   aria-hidden="true"
                   className="absolute left-8 top-4 -ml-px h-full w-0.5 bg-gray-200"

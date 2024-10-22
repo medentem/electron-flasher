@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import { createUrl } from "../utils/api";
-import type { DeviceHardware } from "src/types/api";
+import { getCorsFriendyReleaseUrl, type DeviceHardware } from "../types/api";
 import { OfflineHardwareList } from "../types/resources";
 import type * as Protobuf from "@meshtastic/protobufs";
 import { sleep } from "../utils/promise";
 import { v4 as uuidv4 } from "uuid";
+import { useFirmwareStore } from "./firmwareStore";
 
 interface DeviceState {
   connectedDevice: Protobuf.Mesh.DeviceMetadata | undefined;
@@ -134,7 +135,16 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
         driveListBefore.find((y) => x.devicePath === y.devicePath) === undefined
       );
     });
+    set({ progressMessage: "Starting firmware download." });
     console.info(`DFU Device Detected: ${JSON.stringify(meshDevice)}`);
+
+    // Download firmware to temp dir
+    const selectedFirmware = useFirmwareStore.getState().selectedFirmware;
+    await window.electronAPI.downloadFirmware(
+      getCorsFriendyReleaseUrl(selectedFirmware.zip_url),
+    );
+    set({ progressMessage: "Copying firmware." });
+
     set({ isUpdating: false, progressMessage: undefined });
   },
 }));

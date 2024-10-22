@@ -6,19 +6,28 @@ interface FirmwareState {
   alpha: FirmwareResource[];
   previews: FirmwareResource[];
   pullRequests: FirmwareResource[];
-  selectedFirmwareId: string | undefined;
-  setSelectedFirmwareId: (selectedFirmwareId: string) => void;
+  firmwareRollup: FirmwareResource[];
+  selectedFirmware: FirmwareResource | undefined;
+  setSelectedFirmware: (selectedFirmwareId: string) => void;
+  setFirmwareRollup: (firmwareRollup: FirmwareResource[]) => void;
   getFirmwareReleases: () => Promise<void>;
 }
 
-export const useFirmwareStore = create<FirmwareState>((set, _get) => ({
+export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   stable: new Array<FirmwareResource>(),
   alpha: new Array<FirmwareResource>(),
   previews: new Array<FirmwareResource>(),
   pullRequests: new Array<FirmwareResource>(),
-  selectedFirmwareId: undefined,
-  setSelectedFirmwareId: (selectedFirmwareId: string) => {
-    set({ selectedFirmwareId });
+  firmwareRollup: new Array<FirmwareResource>(),
+  selectedFirmware: undefined,
+  setSelectedFirmware: (selectedFirmwareId: string) => {
+    const firmware = get().firmwareRollup.find(
+      (x) => x.id === selectedFirmwareId,
+    );
+    set({ selectedFirmware: firmware });
+  },
+  setFirmwareRollup: (firmwareRollup: FirmwareResource[]) => {
+    set({ firmwareRollup });
   },
   getFirmwareReleases: async () => {
     const result: FirmwareReleases =
