@@ -71,9 +71,9 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   clearState: set({} as DeviceState, true),
   fetchDeviceList: async () => {
     try {
-      const result: DeviceHardware[] = await window.electronAPI.apiRequest(
-        createUrl("api/resource/deviceHardware"),
-      );
+      const result: DeviceHardware[] = await window.electronAPI.apiRequest<
+        DeviceHardware[]
+      >(createUrl("api/resource/deviceHardware"));
       set({
         availableTargets: result.filter(
           (t: DeviceHardware) => t.activelySupported,

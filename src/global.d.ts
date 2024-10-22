@@ -13,7 +13,7 @@ declare global {
     getSerialPorts: () => Promise<SerialPortInfo[]>;
     connectToDevice: (path: string) => Promise<void>;
     disconnectFromDevice: (path: string) => Promise<void>;
-    apiRequest: (url: string) => Promise<any>;
+    apiRequest: <T>(url: string) => Promise<T>;
     onDeviceMetadata: (callback: (data: any) => void) => void;
     getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
@@ -40,5 +40,21 @@ declare global {
   interface FileInfo {
     fullPath: string;
     fileName: string;
+  }
+
+  interface FirmwareResource {
+    id: string;
+    title: string;
+    page_url?: string;
+    zip_url?: string;
+    release_notes?: string;
+  }
+
+  interface FirmwareReleases {
+    releases: {
+      stable: FirmwareResource[];
+      alpha: FirmwareResource[];
+    };
+    pullRequests: FirmwareResource[];
   }
 }
