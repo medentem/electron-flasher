@@ -1,4 +1,4 @@
-import { useFirmwareStore } from "src/stores/firmwareStore";
+import { useFirmwareStore } from "../stores/firmwareStore";
 import MeshtasticIcon from "./MeshtasticIcon";
 import { FolderPlusIcon } from "@heroicons/react/24/solid";
 
