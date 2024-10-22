@@ -18,6 +18,12 @@ declare global {
     getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
     getDrives: (requestId: string) => Promise<Drive[]>;
+    downloadFirmware: (fileUrl: string) => Promise<void>;
+    copyFirmware: (
+      fileName: string,
+      fromPath: string,
+      toPath: string,
+    ) => Promise<void>;
   }
 
   interface SerialPortInfo {
@@ -29,5 +35,10 @@ declare global {
     productId?: string;
     vendorId?: string;
     deviceName?: string;
+  }
+
+  interface FileInfo {
+    fullPath: string;
+    fileName: string;
   }
 }

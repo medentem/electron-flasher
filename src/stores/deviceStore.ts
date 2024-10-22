@@ -17,15 +17,18 @@ interface DeviceState {
   finishedUpdate: boolean;
   deviceImage: string | undefined;
   progressMessage: string | undefined;
+  isUF2: () => boolean;
+  isESP32: () => boolean;
   setConnectedDevice: (value: Protobuf.Mesh.DeviceMetadata) => void;
   setConnectedTarget: (value: DeviceHardware) => void;
   setSelectedPort: (value: SerialPortInfo) => void;
   fetchDeviceList: () => Promise<void>;
   fetchPorts: () => Promise<void>;
   updateDevice: () => Promise<void>;
+  startUF2Update: () => Promise<void>;
 }
 
-export const useDeviceStore = create<DeviceState>((set, _get) => ({
+export const useDeviceStore = create<DeviceState>((set, get) => ({
   connectedDevice: undefined,
   connectedTarget: undefined,
   selectedPort: undefined,
@@ -36,6 +39,15 @@ export const useDeviceStore = create<DeviceState>((set, _get) => ({
   isScanning: false,
   finishedUpdate: false,
   progressMessage: undefined,
+  isUF2: () => {
+    return (
+      get().connectedTarget &&
+      ["nrf52840", "rp2040"].includes(get().connectedTarget.architecture)
+    );
+  },
+  isESP32: () => {
+    return get().connectedTarget?.architecture.startsWith("esp32");
+  },
   setConnectedDevice: (value: Protobuf.Mesh.DeviceMetadata) => {
     set((state) => {
       // Now that we've successfully connected to the device, and we have the DeviceMetadata,
@@ -85,6 +97,16 @@ export const useDeviceStore = create<DeviceState>((set, _get) => ({
     set({ isUpdating: true, progressMessage: "Checking device type." });
 
     // TODO: check for nrf vs ESP32
+    if (get().isUF2()) {
+      console.info("UF2 device detected.");
+      await get().startUF2Update();
+    } else if (get().isESP32()) {
+      console.info("ESP32 device detected.");
+    } else {
+      // ERROR
+    }
+  },
+  startUF2Update: async () => {
     const driveListBefore = await window.electronAPI.getDrives(uuidv4());
     console.info(
       `USB Drives Attached (pre-DFU): ${JSON.stringify(driveListBefore)}`,
