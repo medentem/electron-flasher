@@ -6,6 +6,8 @@ interface FirmwareState {
   alpha: FirmwareResource[];
   previews: FirmwareResource[];
   pullRequests: FirmwareResource[];
+  selectedFirmwareId: string | undefined;
+  setSelectedFirmwareId: (selectedFirmwareId: string) => void;
   getFirmwareReleases: () => Promise<void>;
 }
 
@@ -14,6 +16,10 @@ export const useFirmwareStore = create<FirmwareState>((set, _get) => ({
   alpha: new Array<FirmwareResource>(),
   previews: new Array<FirmwareResource>(),
   pullRequests: new Array<FirmwareResource>(),
+  selectedFirmwareId: undefined,
+  setSelectedFirmwareId: (selectedFirmwareId: string) => {
+    set({ selectedFirmwareId });
+  },
   getFirmwareReleases: async () => {
     const result: FirmwareReleases =
       await window.electronAPI.apiRequest<FirmwareReleases>(

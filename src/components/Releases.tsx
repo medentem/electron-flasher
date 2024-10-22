@@ -11,6 +11,9 @@ export default function Releases() {
   const stableFirmwareReleases = useFirmwareStore((state) => state.stable);
   const alphaFirmwareReleases = useFirmwareStore((state) => state.alpha);
   const previewFirmwareReleases = useFirmwareStore((state) => state.previews);
+  const setSelectedFirmwareId = useFirmwareStore(
+    (state) => state.setSelectedFirmwareId,
+  );
   const getFirmwareReleases = useFirmwareStore(
     (state) => state.getFirmwareReleases,
   );
@@ -20,6 +23,12 @@ export default function Releases() {
   useEffect(() => {
     getFirmwareReleases();
   }, [getFirmwareReleases]);
+
+  useEffect(() => {
+    if (selectedIdx && firmwares && firmwares.length > 0) {
+      setSelectedFirmwareId(firmwares[selectedIdx].id);
+    }
+  }, [selectedIdx, setSelectedFirmwareId, firmwares]);
 
   useEffect(() => {
     if (stableFirmwareReleases.length > 0 && alphaFirmwareReleases.length > 0) {
