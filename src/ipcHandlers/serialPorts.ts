@@ -87,6 +87,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle(
     "update-esp32",
     async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
+      console.info("Handling update-esp32.");
       if (!port) return;
       const transport = new Transport(port, true);
       const espLoader = await connectEsp32(transport);

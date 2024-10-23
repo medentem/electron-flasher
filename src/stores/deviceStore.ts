@@ -18,6 +18,7 @@ interface DeviceState {
   finishedUpdate: boolean;
   deviceImage: string | undefined;
   progressMessage: string | undefined;
+  flashProgress: number;
   setIsScanning: (val: boolean) => void;
   cleanupPostUpdate: () => void;
   isUF2: () => boolean;
@@ -29,6 +30,7 @@ interface DeviceState {
   fetchPorts: () => Promise<void>;
   updateDevice: () => Promise<void>;
   startUF2Update: () => Promise<void>;
+  startESP32Update: () => Promise<void>;
   getUF2FirmwareFileName: () => string;
   getESP32FirmwareFileName: () => string;
 }
@@ -44,6 +46,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   isScanning: false,
   finishedUpdate: false,
   progressMessage: undefined,
+  flashProgress: 0,
   setIsScanning: (val: boolean) => {
     set({ isScanning: val });
   },
@@ -125,9 +128,48 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       await get().startUF2Update();
     } else if (get().isESP32()) {
       console.info("ESP32 device detected.");
+      await get().startESP32Update();
     } else {
       // ERROR
     }
+  },
+  startESP32Update: async () => {
+    if (!get().selectedPort) {
+      return;
+    }
+    await window.electronAPI.baud1200(get().selectedPort.path);
+
+    // Check for custom firmware
+    const customFirmwarePath = useFirmwareStore.getState().customFirmwarePath;
+    const customFirmwareFileName =
+      useFirmwareStore.getState().customFirmwareFileName;
+
+    let fullPath = undefined;
+    let fileName = undefined;
+
+    if (customFirmwarePath) {
+      set({ progressMessage: "Reading custom firmware." });
+      fullPath = customFirmwarePath;
+      fileName = customFirmwareFileName;
+    } else {
+      set({ progressMessage: "Starting firmware download." });
+      fileName = get().getESP32FirmwareFileName();
+      fullPath = useFirmwareStore.getState().getFirmwareDownloadUrl(fileName);
+    }
+
+    set({ progressMessage: "Starting update download." });
+
+    window.electronAPI.onFlashProgress((progress: number) => {
+      set({
+        flashProgress: progress,
+        progressMessage: `Flashing ${progress}%`,
+      });
+    });
+    await window.electronAPI.updateEsp32(
+      fileName,
+      fullPath,
+      !customFirmwarePath,
+    );
   },
   startUF2Update: async () => {
     const driveListBefore = await window.electronAPI.getDrives(uuidv4());
