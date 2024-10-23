@@ -34,7 +34,11 @@ export default function Releases() {
   }, [getFirmwareReleases]);
 
   useEffect(() => {
-    if (selectedIdx && firmwareRollup && firmwareRollup.length > 0) {
+    if (
+      selectedIdx !== undefined &&
+      firmwareRollup &&
+      firmwareRollup.length > 0
+    ) {
       setSelectedFirmware(firmwareRollup[selectedIdx].id);
     }
   }, [selectedIdx, setSelectedFirmware, firmwareRollup]);

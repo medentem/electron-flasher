@@ -31,7 +31,12 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const firmware = get().firmwareRollup.find(
       (x) => x.id === selectedFirmwareId,
     );
-    set({ selectedFirmware: firmware });
+    console.log(firmware);
+    set({
+      selectedFirmware: firmware,
+      customFirmwareFileName: undefined,
+      customFirmwarePath: undefined,
+    });
   },
   setCustomFirmware: async (customFirmware: string) => {
     const fileName = await window.electronAPI.getFilename(customFirmware);
