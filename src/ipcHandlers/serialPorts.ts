@@ -1,7 +1,7 @@
 // src/ipcHandlers/serialPorts.ts
 
 import { ipcMain } from "electron";
-import { SerialPort } from "serialport";
+import { SerialPort as ElectronSerialPort } from "serialport";
 import { exec } from "node:child_process";
 import wmi from "node-wmi";
 import plist from "plist";
@@ -17,10 +17,11 @@ import {
   Transport,
 } from "esptool-js";
 import axios from "axios";
+import { ElectronSerialPortWrapper } from "../utils/electronSerialPortWrapper";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
-let port: SerialPort | undefined;
+let port: ElectronSerialPort | undefined;
 let canEnterFlashMode: boolean = false;
 
 export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
@@ -28,7 +29,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle("get-serial-ports", async () => {
     try {
-      const ports = await SerialPort.list();
+      const ports = await ElectronSerialPort.list();
       const enrichedPorts = await Promise.all(
         ports.map(async (port) => {
           let deviceName = "Unknown Device";
@@ -76,7 +77,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
     }
     await connection.disconnect();
     /** Set device if specified, else request. */
-    port = new SerialPort({
+    port = new ElectronSerialPort({
       path,
       baudRate: 1200,
     });
@@ -89,7 +90,10 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
     async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
       console.info("Handling update-esp32.");
       if (!port) return;
-      const transport = new Transport(port, true);
+      const transport = new Transport(
+        new ElectronSerialPortWrapper(port),
+        true,
+      );
       const espLoader = await connectEsp32(transport);
       const content = await fetchBinaryContent(fileName, filePath, isUrl);
       const flashOptions: FlashOptions = {
