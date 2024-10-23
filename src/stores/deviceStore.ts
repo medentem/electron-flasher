@@ -137,7 +137,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     if (!get().selectedPort) {
       return;
     }
-    await window.electronAPI.baud1200(get().selectedPort.path);
+    if (!(await window.electronAPI.baud1200(get().selectedPort.path))) return;
 
     // Check for custom firmware
     const customFirmwarePath = useFirmwareStore.getState().customFirmwarePath;

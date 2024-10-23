@@ -80,18 +80,28 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
     port = new ElectronSerialPort({
       path,
       baudRate: 1200,
+      autoOpen: false,
     });
-    await sleep(1000);
-    return port.isOpen;
+    port.on("open", async () => {
+      await sleep(500);
+      port.close();
+    });
+    port.open();
   });
 
   ipcMain.handle(
     "update-esp32",
-    async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
+    async (
+      _event: any,
+      devicePath: string,
+      fileName: string,
+      filePath: string,
+      isUrl: boolean,
+    ) => {
       console.info("Handling update-esp32.");
-      if (!port) return;
+
       const transport = new Transport(
-        new ElectronSerialPortWrapper(port),
+        new ElectronSerialPortWrapper(devicePath, 115200),
         true,
       );
       const espLoader = await connectEsp32(transport);
@@ -231,7 +241,7 @@ async function getWmiDeviceInfo(): Promise<any[]> {
 async function connectEsp32(transport: Transport): Promise<ESPLoader> {
   const loaderOptions = <LoaderOptions>{
     transport,
-    baudrate: 1200,
+    baudrate: 115200,
     enableTracing: false,
   };
   const espLoader = new ESPLoader(loaderOptions);

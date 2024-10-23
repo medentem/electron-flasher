@@ -1,4 +1,4 @@
-import type { SerialPort as ElectronSerialPort } from "serialport";
+import { SerialPort, type SerialPort as ElectronSerialPort } from "serialport";
 
 interface SerialOptions {
   baudRate: number;
@@ -35,8 +35,13 @@ export class ElectronSerialPortWrapper {
   readonly readable: ReadableStream<Uint8Array> | null;
   readonly writable: WritableStream<Uint8Array> | null;
 
-  constructor(electronSerialPort: ElectronSerialPort) {
-    this._electronSerialPort = electronSerialPort;
+  constructor(path: string, baud: number) {
+    this._electronSerialPort = new SerialPort({
+      path,
+      baudRate: baud,
+      autoOpen: false,
+    });
+
     this._serialPortInfo = {};
     this.readable = this.createReadableStream();
     this.writable = this.createWritableStream();
@@ -48,6 +53,25 @@ export class ElectronSerialPortWrapper {
 
   public getInfo(): SerialPortInfo {
     return this._serialPortInfo;
+  }
+
+  public async open(options: SerialOptions): Promise<void> {
+    this._electronSerialPort.update({ baudRate: options.baudRate });
+    return new Promise((resolve, reject) => {
+      this._electronSerialPort.open((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  }
+
+  public async close(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._electronSerialPort.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
   }
 
   private createReadableStream(): ReadableStream<Uint8Array> {
