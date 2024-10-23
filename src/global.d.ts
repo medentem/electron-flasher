@@ -26,6 +26,7 @@ declare global {
     ) => Promise<void>;
     selectFile: () => Promise<string | undefined>;
     getFilename: (filePath: string) => Promise<string>;
+    baud1200: (path: string) => Promise<boolean>;
   }
 
   interface SerialPortInfo {

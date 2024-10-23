@@ -7,6 +7,7 @@ import wmi from "node-wmi";
 import plist from "plist";
 import type { BrowserWindow } from "electron/main";
 import { Client, type ElectronSerialConnection } from "@meshtastic/js";
+import { sleep } from "../utils/promise";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
@@ -56,6 +57,21 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       return;
     }
     connection.enterDfuMode();
+  });
+
+  ipcMain.handle("baud-1200", async (_event, path: string) => {
+    if (!canEnterFlashMode || !connection) {
+      console.error("Device not ready for flash mode");
+      return;
+    }
+    await connection.disconnect();
+    /** Set device if specified, else request. */
+    const port = new SerialPort({
+      path,
+      baudRate: 1200,
+    });
+    await sleep(1000);
+    return port.isOpen;
   });
 
   ipcMain.handle("disconnect-from-device", async (_event, path: string) => {

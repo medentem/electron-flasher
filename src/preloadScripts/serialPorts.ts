@@ -8,5 +8,6 @@ export function preloadSerialPortAPIs(ipcRenderer: Electron.IpcRenderer) {
     onDeviceMetadata: (callback: (data: any) => void) =>
       ipcRenderer.on("on-device-metadata", (_event, data) => callback(data)),
     enterDfuMode: () => ipcRenderer.invoke("enter-dfu-mode"),
+    baud1200: (path: string) => ipcRenderer.invoke("baud-1200", path),
   };
 }

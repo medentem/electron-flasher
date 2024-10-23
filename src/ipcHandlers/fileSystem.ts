@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import axios from "axios";
+import { arrayBufferToBinaryString } from "blob-util";
+import AdmZip from "adm-zip";
 
 let _mainWindow: BrowserWindow | undefined;
 
@@ -75,4 +77,50 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle("get-filename", async (_event: any, filePath: string) => {
     return path.basename(filePath);
   });
+}
+
+async function fetchBinaryContent(
+  fileName: string,
+  filePath: string,
+  isUrl: boolean,
+): Promise<string> {
+  if (isUrl) {
+    // Download the file
+    const response = await axios({
+      method: "GET",
+      url: filePath,
+      responseType: "arraybuffer",
+    });
+    return arrayBufferToBinaryString(response.data);
+  }
+  if (filePath.endsWith(".zip")) {
+    const zipReader = new AdmZip(filePath);
+    const file = zipReader.getEntries().find((entry) => {
+      if (fileName.startsWith("firmware-tbeam-."))
+        return (
+          !entry.entryName.includes("s3") &&
+          new RegExp(fileName).test(entry.entryName) &&
+          fileName.endsWith("update.bin") ===
+            entry.entryName.endsWith("update.bin")
+        );
+      return (
+        new RegExp(fileName).test(entry.entryName) &&
+        fileName.endsWith("update.bin") ===
+          entry.entryName.endsWith("update.bin")
+      );
+    });
+    if (file) {
+      console.log("Found file:", file.entryName);
+      const buffer = file.getData();
+      return arrayBufferToBinaryString(buffer.buffer);
+    }
+  } else {
+    /*
+    const buffer = await this.selectedFile.arrayBuffer();
+    return arrayBufferToBinaryString(new Uint8Array(buffer));
+    */
+  }
+  throw new Error(
+    "Cannot fetch binary content without a file or firmware selected",
+  );
 }

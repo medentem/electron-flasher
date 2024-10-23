@@ -30,6 +30,7 @@ interface DeviceState {
   updateDevice: () => Promise<void>;
   startUF2Update: () => Promise<void>;
   getUF2FirmwareFileName: () => string;
+  getESP32FirmwareFileName: () => string;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -58,6 +59,9 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   },
   getUF2FirmwareFileName: () => {
     return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.uf2`;
+  },
+  getESP32FirmwareFileName: () => {
+    return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}-update.bin`;
   },
   isUF2: () => {
     return (
