@@ -29,28 +29,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle("get-serial-ports", async () => {
     try {
-      const ports = await ElectronSerialPort.list();
-      const enrichedPorts = await Promise.all(
-        ports.map(async (port) => {
-          let deviceName = "Unknown Device";
-          if (process.platform === "darwin") {
-            console.info("OSX detected - getting additional information.");
-            deviceName = await getDeviceNameForMacOS(port.serialNumber);
-          } else if (process.platform === "win32") {
-            const wmiData = await getWmiDeviceInfo();
-            const wmiDevice = wmiData.find(
-              (device) => device.PNPDeviceID === port.pnpId,
-            );
-            if (wmiDevice) {
-              deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
-            }
-          }
-          return {
-            ...port,
-            deviceName: deviceName || "Unknown Device",
-          };
-        }),
-      );
+      const enrichedPorts = await getEnrichedPorts();
       return enrichedPorts;
     } catch (error) {
       console.error("Error fetching serial ports:", error);
@@ -73,35 +52,35 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle("baud-1200", async (_event, path: string) => {
     if (!canEnterFlashMode || !connection) {
       console.error("Device not ready for flash mode");
-      return;
+      return false;
     }
     await connection.disconnect();
+
     /** Set device if specified, else request. */
     port = new ElectronSerialPort({
       path,
       baudRate: 1200,
       autoOpen: false,
     });
-    port.on("open", async () => {
-      await sleep(500);
-      port.close();
-    });
     port.open();
+    await sleep(2000);
+    return true;
   });
 
   ipcMain.handle(
     "update-esp32",
-    async (
-      _event: any,
-      devicePath: string,
-      fileName: string,
-      filePath: string,
-      isUrl: boolean,
-    ) => {
+    async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
       console.info("Handling update-esp32.");
 
+      const portList = await getEnrichedPorts();
+      const port = portList.find(
+        (x) =>
+          x.deviceName.toLowerCase().includes("jtag") ||
+          x.manufacturer.toLowerCase().includes("expressif"),
+      );
+
       const transport = new Transport(
-        new ElectronSerialPortWrapper(devicePath, 115200),
+        new ElectronSerialPortWrapper(port.path, 115200),
         true,
       );
       const espLoader = await connectEsp32(transport);
@@ -137,6 +116,33 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       throw error;
     }
   });
+}
+
+async function getEnrichedPorts() {
+  const ports = await ElectronSerialPort.list();
+  const enrichedPorts = await Promise.all(
+    ports.map(async (port) => {
+      let deviceName = "Unknown Device";
+      if (process.platform === "darwin") {
+        console.info("OSX detected - getting additional information.");
+        deviceName = await getDeviceNameForMacOS(port.serialNumber);
+      } else if (process.platform === "win32") {
+        const wmiData = await getWmiDeviceInfo();
+        const wmiDevice = wmiData.find(
+          (device) => device.PNPDeviceID === port.pnpId,
+        );
+        if (wmiDevice) {
+          deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
+        }
+      }
+      return {
+        ...port,
+        deviceName: deviceName || "Unknown Device",
+      };
+    }),
+  );
+  console.log(enrichedPorts);
+  return enrichedPorts;
 }
 
 async function connectToDevice(path: string) {

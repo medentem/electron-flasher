@@ -28,7 +28,6 @@ declare global {
     getFilename: (filePath: string) => Promise<string>;
     baud1200: (path: string) => Promise<boolean>;
     updateEsp32: (
-      devicePath: string,
       fileName: string,
       filePath: string,
       isUrl: boolean,
