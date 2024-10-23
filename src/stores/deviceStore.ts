@@ -158,23 +158,38 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     if (!meshDevice) {
       return;
     }
-
-    set({ progressMessage: "Starting firmware download." });
     console.info(`DFU Device Detected: ${JSON.stringify(meshDevice)}`);
 
-    // Download firmware to temp dir
-    const fileName = get().getUF2FirmwareFileName();
-    const firmwareDownloadUrl = useFirmwareStore
-      .getState()
-      .getFirmwareDownloadUrl(fileName);
-    const fileInfo =
-      await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+    // Check for custom firmware
+    const customFirmwarePath = useFirmwareStore.getState().customFirmwarePath;
+    const customFirmwareFileName =
+      useFirmwareStore.getState().customFirmwareFileName;
+
+    let finalCopyFromPath = undefined;
+    let fileName = undefined;
+
+    if (customFirmwarePath) {
+      finalCopyFromPath = customFirmwarePath;
+      fileName = customFirmwareFileName;
+    } else {
+      set({ progressMessage: "Starting firmware download." });
+
+      // Download firmware to temp dir
+      fileName = get().getUF2FirmwareFileName();
+      const firmwareDownloadUrl = useFirmwareStore
+        .getState()
+        .getFirmwareDownloadUrl(fileName);
+      const fileInfo =
+        await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+      fileName = fileInfo.fileName;
+      finalCopyFromPath = fileInfo.fullPath;
+    }
 
     set({ progressMessage: "Copying firmware." });
 
     await window.electronAPI.copyFirmware(
-      fileInfo.fileName,
-      fileInfo.fullPath,
+      fileName,
+      finalCopyFromPath,
       meshDevice.mountpoints[0].path,
     );
 
