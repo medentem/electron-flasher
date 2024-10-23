@@ -31,7 +31,6 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const firmware = get().firmwareRollup.find(
       (x) => x.id === selectedFirmwareId,
     );
-    console.log(firmware);
     set({
       selectedFirmware: firmware,
       customFirmwareFileName: undefined,
