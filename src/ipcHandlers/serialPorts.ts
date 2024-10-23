@@ -8,9 +8,19 @@ import plist from "plist";
 import type { BrowserWindow } from "electron/main";
 import { Client, type ElectronSerialConnection } from "@meshtastic/js";
 import { sleep } from "../utils/promise";
+import { arrayBufferToBinaryString } from "blob-util";
+import AdmZip from "adm-zip";
+import {
+  ESPLoader,
+  type FlashOptions,
+  type LoaderOptions,
+  Transport,
+} from "esptool-js";
+import axios from "axios";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
+let port: SerialPort | undefined;
 let canEnterFlashMode: boolean = false;
 
 export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
@@ -66,13 +76,40 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
     }
     await connection.disconnect();
     /** Set device if specified, else request. */
-    const port = new SerialPort({
+    port = new SerialPort({
       path,
       baudRate: 1200,
     });
     await sleep(1000);
     return port.isOpen;
   });
+
+  ipcMain.handle(
+    "update-esp32",
+    async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
+      if (!port) return;
+      const transport = new Transport(port, true);
+      const espLoader = await connectEsp32(transport);
+      const content = await fetchBinaryContent(fileName, filePath, isUrl);
+      const flashOptions: FlashOptions = {
+        fileArray: [{ data: content, address: 0x10000 }],
+        flashSize: "keep",
+        eraseAll: false,
+        compress: true,
+        flashMode: "keep",
+        flashFreq: "keep",
+        reportProgress: (fileIndex, written, total) => {
+          const flashPercentDone = Math.round((written / total) * 100);
+          _mainWindow.webContents.send("on-flash-progress", flashPercentDone);
+          console.info(`Flash Progres: ${flashPercentDone}`);
+          if (written === total) {
+            console.info("Done flashing!");
+          }
+        },
+      };
+      await startWrite(espLoader, transport, flashOptions);
+    },
+  );
 
   ipcMain.handle("disconnect-from-device", async (_event, path: string) => {
     try {
@@ -184,4 +221,75 @@ async function getWmiDeviceInfo(): Promise<any[]> {
       },
     );
   });
+}
+
+async function connectEsp32(transport: Transport): Promise<ESPLoader> {
+  const loaderOptions = <LoaderOptions>{
+    transport,
+    baudrate: 1200,
+    enableTracing: false,
+  };
+  const espLoader = new ESPLoader(loaderOptions);
+  const chip = await espLoader.main();
+  console.log("Detected chip:", chip);
+  return espLoader;
+}
+
+async function fetchBinaryContent(
+  fileName: string,
+  filePath: string,
+  isUrl: boolean,
+): Promise<string> {
+  if (isUrl) {
+    // Download the file
+    const response = await axios({
+      method: "GET",
+      url: filePath,
+      responseType: "arraybuffer",
+    });
+    return arrayBufferToBinaryString(response.data);
+  }
+  if (filePath.endsWith(".zip")) {
+    const zipReader = new AdmZip(filePath);
+    const file = zipReader.getEntries().find((entry) => {
+      if (fileName.startsWith("firmware-tbeam-."))
+        return (
+          !entry.entryName.includes("s3") &&
+          new RegExp(fileName).test(entry.entryName) &&
+          fileName.endsWith("update.bin") ===
+            entry.entryName.endsWith("update.bin")
+        );
+      return (
+        new RegExp(fileName).test(entry.entryName) &&
+        fileName.endsWith("update.bin") ===
+          entry.entryName.endsWith("update.bin")
+      );
+    });
+    if (file) {
+      console.log("Found file:", file.entryName);
+      const buffer = file.getData();
+      return arrayBufferToBinaryString(buffer.buffer);
+    }
+  } else {
+    const buffer = fs.readFileSync(filePath, null).buffer;
+    return arrayBufferToBinaryString(buffer);
+  }
+  throw new Error(
+    "Cannot fetch binary content without a file or firmware selected",
+  );
+}
+
+async function startWrite(
+  espLoader: ESPLoader,
+  transport: Transport,
+  flashOptions: FlashOptions,
+) {
+  await espLoader.writeFlash(flashOptions);
+  await resetEsp32(transport);
+}
+
+async function resetEsp32(transport: Transport) {
+  await transport.setRTS(true);
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  await transport.setRTS(false);
 }

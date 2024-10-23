@@ -9,5 +9,11 @@ export function preloadSerialPortAPIs(ipcRenderer: Electron.IpcRenderer) {
       ipcRenderer.on("on-device-metadata", (_event, data) => callback(data)),
     enterDfuMode: () => ipcRenderer.invoke("enter-dfu-mode"),
     baud1200: (path: string) => ipcRenderer.invoke("baud-1200", path),
+    updateEsp32: (fileName: string, filePath: string, isUrl: boolean) =>
+      ipcRenderer.invoke("update-esp32", fileName, filePath, isUrl),
+    onFlashProgress: (callback: (progress: number) => void) =>
+      ipcRenderer.on("on-flash-progresss", (_event, progress) =>
+        callback(progress),
+      ),
   };
 }

@@ -27,6 +27,12 @@ declare global {
     selectFile: () => Promise<string | undefined>;
     getFilename: (filePath: string) => Promise<string>;
     baud1200: (path: string) => Promise<boolean>;
+    updateEsp32: (
+      fileName: string,
+      filePath: string,
+      isUrl: boolean,
+    ) => Promise<void>;
+    onFlashProgress: (callback: (progress: number) => void) => void;
   }
 
   interface SerialPortInfo {
