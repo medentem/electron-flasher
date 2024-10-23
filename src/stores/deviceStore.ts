@@ -18,6 +18,7 @@ interface DeviceState {
   finishedUpdate: boolean;
   deviceImage: string | undefined;
   progressMessage: string | undefined;
+  setIsScanning: (val: boolean) => void;
   cleanupPostUpdate: () => void;
   isUF2: () => boolean;
   isESP32: () => boolean;
@@ -42,6 +43,9 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   isScanning: false,
   finishedUpdate: false,
   progressMessage: undefined,
+  setIsScanning: (val: boolean) => {
+    set({ isScanning: val });
+  },
   cleanupPostUpdate: () => {
     set({
       connectedDevice: undefined,

@@ -12,6 +12,7 @@ export default function DeviceCard() {
   const setSelectedPort = useDeviceStore((state) => state.setSelectedPort);
   const deviceImage = useDeviceStore((state) => state.deviceImage);
   const isScanning = useDeviceStore((state) => state.isScanning);
+  const setIsScanning = useDeviceStore((state) => state.setIsScanning);
   const isUpdating = useDeviceStore((state) => state.isUpdating);
   const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
   const updateDevice = useDeviceStore((state) => state.updateDevice);
@@ -42,6 +43,7 @@ export default function DeviceCard() {
       availableTargets &&
       availableTargets.length > 0
     ) {
+      setIsScanning(true);
       // Find the first PORT that matches ANY of the known meshtastic device characteristics (platformio, name, architecture)
       // We're using a metal detector on hackstack to find the needle here
       const matchingPort = availablePorts.find((x) => {
@@ -60,11 +62,22 @@ export default function DeviceCard() {
       if (matchingPort) {
         window.electronAPI.onDeviceMetadata((data) => {
           setConnectedDevice(data.data as Protobuf.Mesh.DeviceMetadata);
+          setIsScanning(false);
         });
         window.electronAPI.connectToDevice(matchingPort.path);
       }
+
+      setTimeout(() => {
+        setIsScanning(false);
+      }, 1000);
     }
-  }, [setSelectedPort, setConnectedDevice, availablePorts, availableTargets]);
+  }, [
+    setIsScanning,
+    setSelectedPort,
+    setConnectedDevice,
+    availablePorts,
+    availableTargets,
+  ]);
 
   const scanForDevice = async () => {
     if (selectedPort) {
