@@ -5,7 +5,7 @@ import Releases from "../components/Releases";
 
 const Home: React.FC = () => {
   return (
-    <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 p-12">
+    <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-6 px-12">
       <div className="flex p-px lg:col-span-4">
         <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 max-lg:rounded-t-[2rem] lg:rounded-tl-[2rem] lg:rounded-bl-[2rem] w-full p-6">
           <DeviceCard />
