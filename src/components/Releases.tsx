@@ -11,8 +11,14 @@ export default function Releases() {
   const stableFirmwareReleases = useFirmwareStore((state) => state.stable);
   const alphaFirmwareReleases = useFirmwareStore((state) => state.alpha);
   const previewFirmwareReleases = useFirmwareStore((state) => state.previews);
+  const customFirmwareFileName = useFirmwareStore(
+    (state) => state.customFirmwareFileName,
+  );
   const setSelectedFirmware = useFirmwareStore(
     (state) => state.setSelectedFirmware,
+  );
+  const setCustomFirmware = useFirmwareStore(
+    (state) => state.setCustomFirmware,
   );
   const getFirmwareReleases = useFirmwareStore(
     (state) => state.getFirmwareReleases,
@@ -35,7 +41,7 @@ export default function Releases() {
 
   useEffect(() => {
     if (stableFirmwareReleases.length > 0 && alphaFirmwareReleases.length > 0) {
-      const firmwares = [
+      let firmwares = [
         ...previewFirmwareReleases.map((x) => {
           return {
             ...x,
@@ -67,14 +73,54 @@ export default function Releases() {
           };
         }),
       ];
+      if (customFirmwareFileName) {
+        firmwares = [
+          {
+            id: customFirmwareFileName,
+            title: customFirmwareFileName,
+            classNames: "bg-red-500",
+            type: "custom",
+            isLatest: false,
+          },
+          ...firmwares,
+        ];
+      }
       setFirmwareRollup(firmwares);
       if (stableFirmwareReleases && stableFirmwareReleases.length > 0) {
         setSelectedIdx(
-          firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
+          customFirmwareFileName
+            ? 0
+            : firmwares.findIndex((x) => x.id === stableFirmwareReleases[0].id),
         );
       }
     }
-  }, [stableFirmwareReleases, alphaFirmwareReleases, previewFirmwareReleases]);
+  }, [
+    customFirmwareFileName,
+    stableFirmwareReleases,
+    alphaFirmwareReleases,
+    previewFirmwareReleases,
+  ]);
+
+  const getDisplayType = (type: string) => {
+    switch (type) {
+      case "preview":
+        return "Pre-release";
+      case "alpha":
+        return "Pre-release";
+      case "stable":
+        return "Stable";
+      case "custom":
+        return "Custom";
+      default:
+        return "Unknown";
+    }
+  };
+
+  const openFilePicker = async () => {
+    const filePath = await window.electronAPI.selectFile();
+    setCustomFirmware(filePath);
+    console.info(`Selected File: ${filePath}`);
+  };
 
   return (
     <div className="flow-root">
@@ -86,7 +132,10 @@ export default function Releases() {
             </h3>
           </div>
           <div className="min-w-0 flex 1">
-            <FolderPlusIcon className="text-gray-500 size-6 cursor-pointer" />
+            <FolderPlusIcon
+              className="text-gray-500 size-6 cursor-pointer"
+              onClick={openFilePicker}
+            />
           </div>
         </div>
       </div>
@@ -125,9 +174,7 @@ export default function Releases() {
                   <div>
                     <p className="text-sm text-gray-500">{item.id}</p>
                     <p className="text-xs italic text-gray-500">
-                      {item.type === "alpha" || item.type === "preview"
-                        ? "Pre-release"
-                        : "Stable"}
+                      {getDisplayType(item.type)}
                     </p>
                   </div>
                   <div className="flex flex-col whitespace-nowrap text-right text-sm text-gray-500">

@@ -1,4 +1,4 @@
-import { ipcMain, type BrowserWindow } from "electron";
+import { dialog, ipcMain, type BrowserWindow } from "electron";
 import { list } from "drivelist";
 import fs from "node:fs";
 import path from "node:path";
@@ -63,4 +63,16 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
       }
     },
   );
+
+  ipcMain.handle("select-file", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ["openFile"],
+      filters: [{ name: "Firmware", extensions: ["uf2", "bin"] }],
+    });
+    return canceled ? undefined : filePaths[0];
+  });
+
+  ipcMain.handle("get-filename", async (_event: any, filePath: string) => {
+    return path.basename(filePath);
+  });
 }

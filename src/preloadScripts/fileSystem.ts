@@ -6,5 +6,8 @@ export function preloadFileSystemAPIs(ipcRenderer: Electron.IpcRenderer) {
       ipcRenderer.invoke("download-firmware", fileUrl),
     copyFirmware: (fileName: string, fromPath: string, toPath: string) =>
       ipcRenderer.invoke("copy-firmware", fileName, fromPath, toPath),
+    selectFile: () => ipcRenderer.invoke("select-file"),
+    getFilename: (filePath: string) =>
+      ipcRenderer.invoke("get-filename", filePath),
   };
 }

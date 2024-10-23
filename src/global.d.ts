@@ -24,6 +24,8 @@ declare global {
       fromPath: string,
       toPath: string,
     ) => Promise<void>;
+    selectFile: () => Promise<string | undefined>;
+    getFilename: (filePath: string) => Promise<string>;
   }
 
   interface SerialPortInfo {
