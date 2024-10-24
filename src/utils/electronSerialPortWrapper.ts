@@ -1,4 +1,9 @@
-import { SerialPort, type SerialPort as ElectronSerialPort } from "serialport";
+import { write } from "original-fs";
+import {
+  ByteLengthParser,
+  SerialPort,
+  type SerialPort as ElectronSerialPort,
+} from "serialport";
 
 interface SerialOptions {
   baudRate: number;
@@ -32,31 +37,69 @@ export class ElectronSerialPortWrapper {
 
   /** A flag indicating the logical connection state of serial port */
   readonly connected: boolean;
-  readonly readable: ReadableStream<Uint8Array> | null;
-  readonly writable: WritableStream<Uint8Array> | null;
+  private readableStream: ReadableStream<Uint8Array>;
+  private writableStream: WritableStream<Uint8Array>;
 
-  constructor(path: string, baud: number) {
+  constructor(path: string, baud: number, info: SerialPortInfo) {
     this._electronSerialPort = new SerialPort({
       path,
       baudRate: baud,
       autoOpen: false,
+      dataBits: 8,
+      rtscts: false,
+      parity: "none",
+      stopBits: 1,
     });
 
-    this._serialPortInfo = {};
-    this.readable = this.createReadableStream();
-    this.writable = this.createWritableStream();
+    this._serialPortInfo = info;
+  }
+
+  get readable() {
+    if (!this.readableStream) {
+      this.readableStream = this.createReadableStream();
+    }
+    return this.readableStream;
+  }
+
+  get writable() {
+    if (!this.writableStream) {
+      this.writableStream = this.createWritableStream();
+    }
+    return this.writableStream;
   }
 
   public async setSignals(signals: SerialOutputSignals): Promise<void> {
-    this._electronSerialPort.set({ rts: signals.requestToSend });
+    console.info(`Attempting to set signals: ${JSON.stringify(signals)}`);
+    return new Promise((resolve, reject) => {
+      this._electronSerialPort.set(
+        {
+          dtr: signals.dataTerminalReady,
+          rts: signals.requestToSend,
+        },
+        (err) => {
+          if (err) {
+            reject(new Error(`Failed to set control signals: ${err.message}`));
+          } else {
+            console.info("Successfully set signals.");
+            resolve();
+          }
+        },
+      );
+    });
   }
 
   public getInfo(): SerialPortInfo {
     return this._serialPortInfo;
   }
 
-  public async open(options: SerialOptions): Promise<void> {
-    this._electronSerialPort.update({ baudRate: options.baudRate });
+  public async open(options?: SerialOptions): Promise<void> {
+    if (options && options.baudRate !== this._electronSerialPort.baudRate) {
+      console.info(
+        `Baud Rate Change - Old: ${this._electronSerialPort.baudRate} New: ${options.baudRate}`,
+      );
+      this._electronSerialPort.update({ baudRate: options.baudRate });
+    }
+    if (this._electronSerialPort.isOpen) return;
     return new Promise((resolve, reject) => {
       this._electronSerialPort.open((err) => {
         if (err) reject(err);
@@ -66,50 +109,129 @@ export class ElectronSerialPortWrapper {
   }
 
   public async close(): Promise<void> {
+    console.info("Request received to close port.");
     return new Promise((resolve, reject) => {
       this._electronSerialPort.close((err) => {
         if (err) reject(err);
-        else resolve();
+        else {
+          console.info("Port closed.");
+          resolve();
+        }
       });
     });
   }
 
   private createReadableStream(): ReadableStream<Uint8Array> {
     const port = this._electronSerialPort;
-    return new ReadableStream({
+    let onData: (data: Buffer) => void;
+    let onError: (err: Error) => void;
+    let onClose: () => void;
+    let isClosed = false;
+
+    return new ReadableStream<Uint8Array>({
       start(controller) {
-        port.on("data", (data: Buffer) => {
-          controller.enqueue(new Uint8Array(data));
-        });
-        port.on("error", (err) => {
+        onData = (data: Buffer) => {
+          if (isClosed) return;
+          try {
+            console.log(data);
+            controller.enqueue(new Uint8Array(data));
+          } catch (e) {
+            console.error("Error enqueuing data:", e);
+            // Do not close the controller here
+          }
+        };
+
+        onError = (err: Error) => {
+          if (isClosed) return;
+          console.error("ReadableStream error:", err);
           controller.error(err);
-        });
-        port.on("close", () => {
-          controller.close();
-        });
+          // Optionally, keep the stream open if you can recover
+        };
+
+        onClose = () => {
+          if (isClosed) return;
+          if (!port.isOpen) {
+            console.log("Port closed");
+            controller.close();
+            isClosed = true;
+          }
+        };
+
+        port.on("data", onData);
+        port.on("error", onError);
+        port.on("close", onClose);
       },
-      cancel() {
-        port.close();
+      cancel(reason) {
+        console.log("ReadableStream cancelled:", reason);
+        if (isClosed) return;
+        isClosed = true;
+        port.off("data", onData);
+        port.off("error", onError);
+        port.off("close", onClose);
+        // Decide whether to close the port
       },
     });
   }
 
   private createWritableStream(): WritableStream<Uint8Array> {
     const port = this._electronSerialPort;
-    return new WritableStream({
-      write(chunk) {
-        return new Promise((resolve, reject) => {
-          port.write(Buffer.from(chunk), (err) => {
-            if (err) reject(err);
-            else resolve();
+    let isClosed = false;
+
+    return new WritableStream<Uint8Array>({
+      async write(chunk) {
+        if (isClosed) {
+          throw new Error("Cannot write to a closed stream.");
+        }
+
+        console.log("Attempting write:", chunk);
+
+        return new Promise<void>((resolve, reject) => {
+          port.write(
+            Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength),
+            (err) => {
+              if (err) {
+                console.error("Error writing to port:", err);
+                reject(
+                  new Error(`Failed to write to serial port: ${err.message}`),
+                );
+              } else {
+                port.drain((drainErr) => {
+                  if (drainErr) {
+                    console.error("Error draining port:", drainErr);
+                    reject(
+                      new Error(
+                        `Failed to drain serial port: ${drainErr.message}`,
+                      ),
+                    );
+                  } else {
+                    console.log(`Write successful: ${chunk}`);
+                    resolve();
+                  }
+                });
+              }
+            },
+          );
+        });
+      },
+      async close() {
+        if (isClosed) return;
+        isClosed = true;
+
+        return new Promise<void>((resolve, reject) => {
+          port.close((err) => {
+            if (err) {
+              console.error("Error closing port:", err);
+              reject(new Error(`Failed to close serial port: ${err.message}`));
+            } else {
+              console.log("Serial port closed.");
+              resolve();
+            }
           });
         });
       },
-      close() {
-        port.close();
-      },
-      abort() {
-        port.close();
+      abort(reason) {
+        console.error("WritableStream aborted:", reason);
+        return this.close();
       },
     });
   }

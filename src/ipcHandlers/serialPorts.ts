@@ -63,7 +63,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       autoOpen: false,
     });
     port.open();
-    await sleep(2000);
+    await sleep(5000);
     return true;
   });
 
@@ -73,16 +73,19 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       console.info("Handling update-esp32.");
 
       const portList = await getEnrichedPorts();
+      console.info(`New Port List: ${JSON.stringify(portList)}`);
       const port = portList.find(
         (x) =>
           x.deviceName.toLowerCase().includes("jtag") ||
-          x.manufacturer.toLowerCase().includes("expressif"),
+          x.manufacturer?.toLowerCase().includes("expressif"),
       );
+      console.info(`Found Port: ${JSON.stringify(port)}`);
 
-      const transport = new Transport(
-        new ElectronSerialPortWrapper(port.path, 115200),
-        true,
-      );
+      const webSerialPort = new ElectronSerialPortWrapper(port.path, 115200, {
+        usbProductId: Number.parseInt(port.productId, 16),
+        usbVendorId: Number.parseInt(port.vendorId, 16),
+      });
+      const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);
       const content = await fetchBinaryContent(fileName, filePath, isUrl);
       const flashOptions: FlashOptions = {
@@ -171,7 +174,6 @@ async function connectToDevice(path: string) {
       baudRate: 115200,
       concurrentLogOutput: false,
     });
-    console.log("connect-to-device");
   } catch (error) {
     console.error(`Error opening serial port ${path}:`, error);
     throw error;
@@ -248,7 +250,8 @@ async function connectEsp32(transport: Transport): Promise<ESPLoader> {
   const loaderOptions = <LoaderOptions>{
     transport,
     baudrate: 115200,
-    enableTracing: false,
+    enableTracing: true,
+    debugLogging: true,
   };
   const espLoader = new ESPLoader(loaderOptions);
   const chip = await espLoader.main();
