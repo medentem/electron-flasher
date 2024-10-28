@@ -33,8 +33,6 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     );
     set({
       selectedFirmware: firmware,
-      customFirmwareFileName: undefined,
-      customFirmwarePath: undefined,
     });
   },
   setCustomFirmware: async (customFirmware: string) => {

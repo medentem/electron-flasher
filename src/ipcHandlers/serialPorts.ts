@@ -74,17 +74,23 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
       const portList = await getEnrichedPorts();
       console.info(`New Port List: ${JSON.stringify(portList)}`);
-      const port = portList.find(
+      const baud1200Port = portList.find(
         (x) =>
           x.deviceName.toLowerCase().includes("jtag") ||
           x.manufacturer?.toLowerCase().includes("expressif"),
       );
-      console.info(`Found Port: ${JSON.stringify(port)}`);
+      console.info(`Found Port: ${JSON.stringify(baud1200Port)}`);
 
-      const webSerialPort = new ElectronSerialPortWrapper(port.path, 115200, {
-        usbProductId: Number.parseInt(port.productId, 16),
-        usbVendorId: Number.parseInt(port.vendorId, 16),
-      });
+      const webSerialPort = new ElectronSerialPortWrapper(
+        baud1200Port.path,
+        115200,
+        {
+          usbProductId: Number.parseInt(baud1200Port.productId, 16),
+          usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
+        },
+        false,
+        port,
+      );
       const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);
       const content = await fetchBinaryContent(fileName, filePath, isUrl);

@@ -103,6 +103,7 @@ export default function Releases() {
     stableFirmwareReleases,
     alphaFirmwareReleases,
     previewFirmwareReleases,
+    setFirmwareRollup,
   ]);
 
   const getDisplayType = (type: string) => {
@@ -123,7 +124,6 @@ export default function Releases() {
   const openFilePicker = async () => {
     const filePath = await window.electronAPI.selectFile();
     setCustomFirmware(filePath);
-    console.info(`Selected File: ${filePath}`);
   };
 
   return (

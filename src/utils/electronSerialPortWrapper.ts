@@ -34,24 +34,31 @@ type FlowControlType = "none" | "hardware";
 export class ElectronSerialPortWrapper {
   protected _electronSerialPort: ElectronSerialPort;
   protected _serialPortInfo: SerialPortInfo;
+  protected _logging: boolean;
 
   /** A flag indicating the logical connection state of serial port */
   readonly connected: boolean;
   private readableStream: ReadableStream<Uint8Array>;
   private writableStream: WritableStream<Uint8Array>;
 
-  constructor(path: string, baud: number, info: SerialPortInfo) {
+  constructor(
+    path: string,
+    baud: number,
+    info: SerialPortInfo,
+    logging: boolean,
+  ) {
     this._electronSerialPort = new SerialPort({
       path,
       baudRate: baud,
       autoOpen: false,
-      dataBits: 8,
-      rtscts: false,
-      parity: "none",
-      stopBits: 1,
+    });
+    this._electronSerialPort.on("open", () => {
+      this.log("PORT OPEN");
+      this.log(this._electronSerialPort);
     });
 
     this._serialPortInfo = info;
+    this._logging = logging;
   }
 
   get readable() {
@@ -69,7 +76,7 @@ export class ElectronSerialPortWrapper {
   }
 
   public async setSignals(signals: SerialOutputSignals): Promise<void> {
-    console.info(`Attempting to set signals: ${JSON.stringify(signals)}`);
+    this.info(`Attempting to set signals: ${JSON.stringify(signals)}`);
     return new Promise((resolve, reject) => {
       this._electronSerialPort.set(
         {
@@ -80,7 +87,7 @@ export class ElectronSerialPortWrapper {
           if (err) {
             reject(new Error(`Failed to set control signals: ${err.message}`));
           } else {
-            console.info("Successfully set signals.");
+            this.info("Successfully set signals.");
             resolve();
           }
         },
@@ -94,10 +101,10 @@ export class ElectronSerialPortWrapper {
 
   public async open(options?: SerialOptions): Promise<void> {
     if (options && options.baudRate !== this._electronSerialPort.baudRate) {
-      console.info(
+      this.info(
         `Baud Rate Change - Old: ${this._electronSerialPort.baudRate} New: ${options.baudRate}`,
       );
-      this._electronSerialPort.update({ baudRate: options.baudRate });
+      await this.updateBaud(options.baudRate);
     }
     if (this._electronSerialPort.isOpen) return;
     return new Promise((resolve, reject) => {
@@ -108,13 +115,22 @@ export class ElectronSerialPortWrapper {
     });
   }
 
+  private async updateBaud(baudRate: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._electronSerialPort.update({ baudRate }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  }
+
   public async close(): Promise<void> {
-    console.info("Request received to close port.");
+    this.info("Request received to close port.");
     return new Promise((resolve, reject) => {
       this._electronSerialPort.close((err) => {
         if (err) reject(err);
         else {
-          console.info("Port closed.");
+          this.info("Port closed.");
           resolve();
         }
       });
@@ -127,23 +143,24 @@ export class ElectronSerialPortWrapper {
     let onError: (err: Error) => void;
     let onClose: () => void;
     let isClosed = false;
+    const adapter = this;
 
     return new ReadableStream<Uint8Array>({
       start(controller) {
         onData = (data: Buffer) => {
           if (isClosed) return;
           try {
-            console.log(data);
+            adapter.log(data);
             controller.enqueue(new Uint8Array(data));
           } catch (e) {
-            console.error("Error enqueuing data:", e);
+            adapter.error("Error enqueuing data:", e);
             // Do not close the controller here
           }
         };
 
         onError = (err: Error) => {
           if (isClosed) return;
-          console.error("ReadableStream error:", err);
+          adapter.error("ReadableStream error:", err);
           controller.error(err);
           // Optionally, keep the stream open if you can recover
         };
@@ -151,7 +168,7 @@ export class ElectronSerialPortWrapper {
         onClose = () => {
           if (isClosed) return;
           if (!port.isOpen) {
-            console.log("Port closed");
+            adapter.log("Port closed");
             controller.close();
             isClosed = true;
           }
@@ -162,7 +179,7 @@ export class ElectronSerialPortWrapper {
         port.on("close", onClose);
       },
       cancel(reason) {
-        console.log("ReadableStream cancelled:", reason);
+        adapter.log(`ReadableStream cancelled: ${reason}`);
         if (isClosed) return;
         isClosed = true;
         port.off("data", onData);
@@ -176,6 +193,7 @@ export class ElectronSerialPortWrapper {
   private createWritableStream(): WritableStream<Uint8Array> {
     const port = this._electronSerialPort;
     let isClosed = false;
+    const adapter = this;
 
     return new WritableStream<Uint8Array>({
       async write(chunk) {
@@ -183,28 +201,28 @@ export class ElectronSerialPortWrapper {
           throw new Error("Cannot write to a closed stream.");
         }
 
-        console.log("Attempting write:", chunk);
+        adapter.log(`Attempting write: ${chunk}`);
 
         return new Promise<void>((resolve, reject) => {
           port.write(
             Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength),
             (err) => {
               if (err) {
-                console.error("Error writing to port:", err);
+                adapter.error(`Error writing to port: ${err}`);
                 reject(
                   new Error(`Failed to write to serial port: ${err.message}`),
                 );
               } else {
                 port.drain((drainErr) => {
                   if (drainErr) {
-                    console.error("Error draining port:", drainErr);
+                    adapter.error(`Error draining port: ${drainErr}`);
                     reject(
                       new Error(
                         `Failed to drain serial port: ${drainErr.message}`,
                       ),
                     );
                   } else {
-                    console.log(`Write successful: ${chunk}`);
+                    adapter.log(`Write successful: ${chunk}`);
                     resolve();
                   }
                 });
@@ -220,19 +238,37 @@ export class ElectronSerialPortWrapper {
         return new Promise<void>((resolve, reject) => {
           port.close((err) => {
             if (err) {
-              console.error("Error closing port:", err);
+              adapter.error(`Error closing port: ${err}`);
               reject(new Error(`Failed to close serial port: ${err.message}`));
             } else {
-              console.log("Serial port closed.");
+              adapter.log("Serial port closed.");
               resolve();
             }
           });
         });
       },
       abort(reason) {
-        console.error("WritableStream aborted:", reason);
+        adapter.error(`WritableStream aborted: ${reason}`);
         return this.close();
       },
     });
+  }
+
+  private log(msg: any) {
+    if (this._logging) {
+      console.log(msg);
+    }
+  }
+
+  private error(msg: any) {
+    if (this._logging) {
+      console.error(msg);
+    }
+  }
+
+  private info(msg: any) {
+    if (this._logging) {
+      console.info(msg);
+    }
   }
 }
