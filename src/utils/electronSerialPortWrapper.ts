@@ -163,7 +163,7 @@ export class ElectronSerialPortWrapper {
         onData = (data: Buffer) => {
           if (isClosed) return;
 
-          // Accumulate data in the buffer
+          // Append new data to the buffer
           this.buffer = new Uint8Array([...this.buffer, ...data]);
 
           let startIdx: number;
@@ -197,9 +197,7 @@ export class ElectronSerialPortWrapper {
           }
         };
 
-        // Pipe data through parser and attach event listeners
-        const parser = port.pipe(new ByteLengthParser({ length: 8 }));
-        parser.on("data", onData);
+        port.on("data", onData);
         port.on("error", onError);
         port.on("close", onClose);
       },
