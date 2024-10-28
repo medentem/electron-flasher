@@ -63,7 +63,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       autoOpen: false,
     });
     port.open();
-    await sleep(5000);
+    await sleep(3000);
     return true;
   });
 
@@ -89,7 +89,6 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
           usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
         },
         false,
-        port,
       );
       const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);

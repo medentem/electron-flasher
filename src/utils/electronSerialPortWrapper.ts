@@ -99,6 +99,7 @@ export class ElectronSerialPortWrapper {
       this.info(
         `Baud Rate Change - Old: ${this._electronSerialPort.baudRate} New: ${options.baudRate}`,
       );
+      if (this._electronSerialPort.isOpen) await this.close();
       await this.updateBaud(options.baudRate);
     }
     if (this._electronSerialPort.isOpen) return;
