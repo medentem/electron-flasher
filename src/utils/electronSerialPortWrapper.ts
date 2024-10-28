@@ -1,9 +1,4 @@
-import { write } from "original-fs";
-import {
-  ByteLengthParser,
-  SerialPort,
-  type SerialPort as ElectronSerialPort,
-} from "serialport";
+import { SerialPort, type SerialPort as ElectronSerialPort } from "serialport";
 
 interface SerialOptions {
   baudRate: number;
