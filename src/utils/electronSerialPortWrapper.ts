@@ -1,4 +1,9 @@
-import { SerialPort, type SerialPort as ElectronSerialPort } from "serialport";
+import { SetOptions } from "@serialport/bindings-interface";
+import {
+  ByteLengthParser,
+  SerialPort,
+  type SerialPort as ElectronSerialPort,
+} from "serialport";
 
 interface SerialOptions {
   baudRate: number;
@@ -35,6 +40,7 @@ export class ElectronSerialPortWrapper {
   readonly connected: boolean;
   private readableStream: ReadableStream<Uint8Array>;
   private writableStream: WritableStream<Uint8Array>;
+  private buffer: Uint8Array = new Uint8Array(0);
 
   constructor(
     path: string,
@@ -72,21 +78,33 @@ export class ElectronSerialPortWrapper {
 
   public async setSignals(signals: SerialOutputSignals): Promise<void> {
     this.info(`Attempting to set signals: ${JSON.stringify(signals)}`);
+    let obj: SetOptions;
+    if (
+      signals.dataTerminalReady !== undefined &&
+      signals.requestToSend !== undefined
+    ) {
+      obj = {
+        dtr: signals.dataTerminalReady,
+        rts: signals.requestToSend,
+      };
+    } else if (signals.dataTerminalReady !== undefined) {
+      obj = {
+        dtr: signals.dataTerminalReady,
+      };
+    } else if (signals.requestToSend !== undefined) {
+      obj = {
+        rts: signals.requestToSend,
+      };
+    }
     return new Promise((resolve, reject) => {
-      this._electronSerialPort.set(
-        {
-          dtr: signals.dataTerminalReady,
-          rts: signals.requestToSend,
-        },
-        (err) => {
-          if (err) {
-            reject(new Error(`Failed to set control signals: ${err.message}`));
-          } else {
-            this.info("Successfully set signals.");
-            resolve();
-          }
-        },
-      );
+      this._electronSerialPort.set(obj, (err) => {
+        if (err) {
+          reject(new Error(`Failed to set control signals: ${err.message}`));
+        } else {
+          this.info("Successfully set signals.");
+          resolve();
+        }
+      });
     });
   }
 
@@ -139,49 +157,58 @@ export class ElectronSerialPortWrapper {
     let onError: (err: Error) => void;
     let onClose: () => void;
     let isClosed = false;
-    const adapter = this;
 
     return new ReadableStream<Uint8Array>({
-      start(controller) {
+      start: (controller) => {
         onData = (data: Buffer) => {
           if (isClosed) return;
-          try {
-            adapter.log(data);
-            controller.enqueue(new Uint8Array(data));
-          } catch (e) {
-            adapter.error("Error enqueuing data:", e);
-            // Do not close the controller here
+
+          // Accumulate data in the buffer
+          this.buffer = new Uint8Array([...this.buffer, ...data]);
+
+          let startIdx: number;
+          let endIdx: number;
+
+          // Process buffer to find SLIP packets between `0xC0` markers
+          while (
+            (startIdx = this.buffer.indexOf(0xc0)) !== -1 &&
+            (endIdx = this.buffer.indexOf(0xc0, startIdx + 1)) !== -1
+          ) {
+            // Extract packet data between two `0xC0` markers
+            const packet = this.buffer.slice(startIdx + 1, endIdx);
+            controller.enqueue(packet); // Send only valid SLIP packet to controller
+
+            // Remove processed packet from the buffer
+            this.buffer = this.buffer.slice(endIdx + 1);
           }
         };
 
         onError = (err: Error) => {
           if (isClosed) return;
-          adapter.error("ReadableStream error:", err);
+          console.error("ReadableStream error:", err);
           controller.error(err);
-          // Optionally, keep the stream open if you can recover
         };
 
         onClose = () => {
           if (isClosed) return;
           if (!port.isOpen) {
-            adapter.log("Port closed");
             controller.close();
             isClosed = true;
           }
         };
 
-        port.on("data", onData);
+        // Pipe data through parser and attach event listeners
+        const parser = port.pipe(new ByteLengthParser({ length: 8 }));
+        parser.on("data", onData);
         port.on("error", onError);
         port.on("close", onClose);
       },
       cancel(reason) {
-        adapter.log(`ReadableStream cancelled: ${reason}`);
         if (isClosed) return;
         isClosed = true;
         port.off("data", onData);
         port.off("error", onError);
         port.off("close", onClose);
-        // Decide whether to close the port
       },
     });
   }

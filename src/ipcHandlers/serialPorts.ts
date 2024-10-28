@@ -88,7 +88,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
           usbProductId: Number.parseInt(baud1200Port.productId, 16),
           usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
         },
-        false,
+        true,
       );
       const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);
