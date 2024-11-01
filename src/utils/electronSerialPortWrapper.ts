@@ -1,8 +1,8 @@
-import { SetOptions } from "@serialport/bindings-interface";
+import type { SetOptions } from "@serialport/bindings-interface";
 import {
   ByteLengthParser,
+  SerialPort as ElectronSerialPort,
   SerialPort,
-  type SerialPort as ElectronSerialPort,
 } from "serialport";
 
 interface SerialOptions {
@@ -40,7 +40,6 @@ export class ElectronSerialPortWrapper {
   readonly connected: boolean;
   private readableStream: ReadableStream<Uint8Array>;
   private writableStream: WritableStream<Uint8Array>;
-  private buffer: Uint8Array = new Uint8Array(0);
 
   constructor(
     path: string,
@@ -52,10 +51,6 @@ export class ElectronSerialPortWrapper {
       path,
       baudRate: baud,
       autoOpen: false,
-    });
-    this._electronSerialPort.on("open", () => {
-      this.log("PORT OPEN");
-      this.log(this._electronSerialPort);
     });
 
     this._serialPortInfo = info;
@@ -78,30 +73,24 @@ export class ElectronSerialPortWrapper {
 
   public async setSignals(signals: SerialOutputSignals): Promise<void> {
     this.info(`Attempting to set signals: ${JSON.stringify(signals)}`);
-    let obj: SetOptions;
-    if (
-      signals.dataTerminalReady !== undefined &&
-      signals.requestToSend !== undefined
-    ) {
-      obj = {
-        dtr: signals.dataTerminalReady,
-        rts: signals.requestToSend,
-      };
-    } else if (signals.dataTerminalReady !== undefined) {
-      obj = {
-        dtr: signals.dataTerminalReady,
-      };
-    } else if (signals.requestToSend !== undefined) {
-      obj = {
-        rts: signals.requestToSend,
-      };
+    const obj: SetOptions = {};
+    if (signals.dataTerminalReady !== undefined) {
+      obj.dtr = signals.dataTerminalReady;
+    }
+    if (signals.requestToSend !== undefined) {
+      obj.rts = signals.requestToSend;
+    }
+    if (signals.break !== undefined) {
+      obj.brk = signals.break;
     }
     return new Promise((resolve, reject) => {
-      this._electronSerialPort.set(obj, (err) => {
+      this._electronSerialPort.set(obj, async (err) => {
         if (err) {
           reject(new Error(`Failed to set control signals: ${err.message}`));
         } else {
           this.info("Successfully set signals.");
+          // Introduce a delay if necessary
+          await new Promise((r) => setTimeout(r, 100));
           resolve();
         }
       });
@@ -113,25 +102,23 @@ export class ElectronSerialPortWrapper {
   }
 
   public async open(options?: SerialOptions): Promise<void> {
-    if (options && options.baudRate !== this._electronSerialPort.baudRate) {
-      this.info(
-        `Baud Rate Change - Old: ${this._electronSerialPort.baudRate} New: ${options.baudRate}`,
-      );
-      if (this._electronSerialPort.isOpen) await this.close();
-      await this.updateBaud(options.baudRate);
-    }
-    if (this._electronSerialPort.isOpen) return;
+    if (this._electronSerialPort.isOpen) await this.close();
+    this._electronSerialPort = new ElectronSerialPort({
+      path: this._electronSerialPort.path,
+      baudRate: options.baudRate,
+      dataBits: options.dataBits as undefined | 5 | 6 | 7 | 8,
+      stopBits: options.stopBits as undefined | 1 | 1.5 | 2,
+      parity: options.parity,
+      rtscts:
+        options.flowControl !== undefined && options.flowControl !== "none",
+      autoOpen: false,
+    });
+    this._electronSerialPort.on("open", () => {
+      this.log("PORT OPEN");
+      this.log(this._electronSerialPort);
+    });
     return new Promise((resolve, reject) => {
       this._electronSerialPort.open((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  }
-
-  private async updateBaud(baudRate: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this._electronSerialPort.update({ baudRate }, (err) => {
         if (err) reject(err);
         else resolve();
       });
@@ -157,29 +144,38 @@ export class ElectronSerialPortWrapper {
     let onError: (err: Error) => void;
     let onClose: () => void;
     let isClosed = false;
+    let inPacket = false;
+    let currentPacket: number[] = [];
+    const adapter = this;
 
     return new ReadableStream<Uint8Array>({
       start: (controller) => {
         onData = (data: Buffer) => {
           if (isClosed) return;
 
-          // Append new data to the buffer
-          this.buffer = new Uint8Array([...this.buffer, ...data]);
+          this.info(`Received data from device: ${Array.from(data)}`);
 
-          let startIdx: number;
-          let endIdx: number;
-
-          // Process buffer to find SLIP packets between `0xC0` markers
-          while (
-            (startIdx = this.buffer.indexOf(0xc0)) !== -1 &&
-            (endIdx = this.buffer.indexOf(0xc0, startIdx + 1)) !== -1
-          ) {
-            // Extract packet data between two `0xC0` markers
-            const packet = this.buffer.slice(startIdx + 1, endIdx);
-            controller.enqueue(packet); // Send only valid SLIP packet to controller
-
-            // Remove processed packet from the buffer
-            this.buffer = this.buffer.slice(endIdx + 1);
+          for (let idx = 0; idx < data.length; idx++) {
+            const byte = data[idx];
+            if (byte === 0xc0) {
+              if (!inPacket) {
+                // Start of packet detected
+                inPacket = true;
+                currentPacket = [byte];
+              } else {
+                // End of packet detected
+                inPacket = false;
+                // Enqueue the collected packet data
+                currentPacket.push(byte);
+                const packetArray = new Uint8Array(currentPacket);
+                this.info(`Found SLIP Packet: ${packetArray}`);
+                controller.enqueue(packetArray);
+                currentPacket = [];
+              }
+            } else if (inPacket) {
+              // Inside a packet, collect data
+              currentPacket.push(byte);
+            }
           }
         };
 
@@ -191,10 +187,12 @@ export class ElectronSerialPortWrapper {
 
         onClose = () => {
           if (isClosed) return;
+          console.log("Closing stream.");
           if (!port.isOpen) {
             controller.close();
             isClosed = true;
           }
+          adapter.readableStream = undefined;
         };
 
         port.on("data", onData);
@@ -203,10 +201,12 @@ export class ElectronSerialPortWrapper {
       },
       cancel(reason) {
         if (isClosed) return;
+        console.log("Cancel stream.");
         isClosed = true;
         port.off("data", onData);
         port.off("error", onError);
         port.off("close", onClose);
+        adapter.readableStream = undefined;
       },
     });
   }
@@ -222,7 +222,7 @@ export class ElectronSerialPortWrapper {
           throw new Error("Cannot write to a closed stream.");
         }
 
-        adapter.log(`Attempting write: ${chunk}`);
+        adapter.log(`Attempting to write to device: ${Array.from(chunk)}`);
 
         return new Promise<void>((resolve, reject) => {
           port.write(
@@ -243,7 +243,7 @@ export class ElectronSerialPortWrapper {
                       ),
                     );
                   } else {
-                    adapter.log(`Write successful: ${chunk}`);
+                    adapter.log(`Write successful: ${Array.from(chunk)}`);
                     resolve();
                   }
                 });
@@ -266,6 +266,7 @@ export class ElectronSerialPortWrapper {
               resolve();
             }
           });
+          adapter.writableStream = undefined;
         });
       },
       abort(reason) {

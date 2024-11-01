@@ -55,16 +55,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       return false;
     }
     await connection.disconnect();
-
-    /** Set device if specified, else request. */
-    port = new ElectronSerialPort({
-      path,
-      baudRate: 1200,
-      autoOpen: false,
-    });
-    port.open();
-    await sleep(3000);
-    return true;
+    return await baud1200(path);
   });
 
   ipcMain.handle(
@@ -88,7 +79,7 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
           usbProductId: Number.parseInt(baud1200Port.productId, 16),
           usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
         },
-        true,
+        false,
       );
       const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);
@@ -123,6 +114,23 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
       console.error(`Error closing serial port ${path}:`, error);
       throw error;
     }
+  });
+}
+
+async function baud1200(path: string) {
+  /** Set device if specified, else request. */
+  port = new ElectronSerialPort({
+    path,
+    baudRate: 1200,
+    autoOpen: false,
+  });
+  return new Promise<boolean>((resolve, _reject) => {
+    port.open();
+    sleep(3000).then(() => {
+      port.close(() => {
+        resolve(true);
+      });
+    });
   });
 }
 
@@ -255,8 +263,8 @@ async function connectEsp32(transport: Transport): Promise<ESPLoader> {
   const loaderOptions = <LoaderOptions>{
     transport,
     baudrate: 115200,
-    enableTracing: true,
-    debugLogging: true,
+    enableTracing: false,
+    debugLogging: false,
   };
   const espLoader = new ESPLoader(loaderOptions);
   const chip = await espLoader.main();

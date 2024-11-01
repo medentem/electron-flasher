@@ -85,7 +85,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       state.setConnectedTarget(target);
       return {
         connectedDevice: value,
-        deviceImage: `https://wismesh.org/images/devices/${target.displayName.replaceAll(" ", "_").toUpperCase()}.png`,
+        deviceImage: `https://wismesh.org/images/devices/${target.hwModelSlug.replaceAll(" ", "_").toUpperCase()}.png`,
       };
     });
   },
