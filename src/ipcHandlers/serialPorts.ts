@@ -18,6 +18,7 @@ import {
 } from "esptool-js";
 import axios from "axios";
 import { ElectronSerialPortWrapper } from "../utils/electronSerialPortWrapper";
+import fs from "node:fs";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
