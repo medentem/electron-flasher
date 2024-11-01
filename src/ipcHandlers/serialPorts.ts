@@ -326,7 +326,9 @@ async function startWrite(
 }
 
 async function resetEsp32(transport: Transport) {
+  console.info("Resetting ESP32...");
   await transport.setRTS(true);
   await new Promise((resolve) => setTimeout(resolve, 100));
   await transport.setRTS(false);
+  console.info("Reset sent.");
 }
