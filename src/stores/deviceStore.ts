@@ -238,7 +238,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       set({
         progressMessage: "Device wiped. Waiting for device to restart...",
       });
-      await sleep(4000);
+      await sleep(5000);
     }
 
     // Check for custom firmware
