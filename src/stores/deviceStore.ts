@@ -202,7 +202,11 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
         !customFirmwarePath,
       );
     }
-    set({ progressMessage: "Update complete! Reboot your device." });
+    set({
+      isUpdating: false,
+      finishedUpdate: true,
+      progressMessage: "Update complete. Unplug & Reboot your device.",
+    });
   },
   startUF2Update: async () => {
     const driveListBefore = await window.electronAPI.getDrives(uuidv4());

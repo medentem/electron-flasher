@@ -99,7 +99,7 @@ export default function DeviceCard() {
   ]);
 
   const lclUpdateDevice = async () => {
-    updateDevice(true);
+    updateDevice(cleanInstall);
   };
 
   const scanForDevice = async () => {
