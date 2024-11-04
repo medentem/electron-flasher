@@ -4,16 +4,19 @@ import DeviceCard from "../components/DeviceCard";
 import Releases from "../components/Releases";
 import ReleaseNotes from "../components/ReleaseNotes";
 import { useFirmwareStore } from "../stores/firmwareStore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDeviceStore } from "../stores/deviceStore";
+import SuccessDialog from "../components/SuccessDialog";
 
 const Home: React.FC = () => {
   const selectedFirmware = useFirmwareStore((state) => state.selectedFirmware);
   const updateDevice = useDeviceStore((state) => state.updateDevice);
+  const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
   const hasCustomFirmware = useFirmwareStore(
     (state) => state.hasCustomFirmware,
   );
   const [openReleaseNotes, setOpenReleaseNotes] = useState(false);
+  const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
 
   const onUpdateClick = () => {
     if (hasCustomFirmware()) {
@@ -30,6 +33,16 @@ const Home: React.FC = () => {
   const onCancel = () => {
     setOpenReleaseNotes(false);
   };
+
+  const successDialogDismissed = () => {
+    setOpenSuccessDialog(false);
+  };
+
+  useEffect(() => {
+    if (finishedUpdate) {
+      setOpenSuccessDialog(true);
+    }
+  }, [finishedUpdate]);
 
   return (
     <>
@@ -51,6 +64,10 @@ const Home: React.FC = () => {
         open={openReleaseNotes}
         onContinue={onContinue}
         onCancel={onCancel}
+      />
+      <SuccessDialog
+        open={openSuccessDialog}
+        onClose={successDialogDismissed}
       />
     </>
   );
