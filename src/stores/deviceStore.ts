@@ -6,6 +6,7 @@ import type * as Protobuf from "@meshtastic/protobufs";
 import { sleep } from "../utils/promise";
 import { v4 as uuidv4 } from "uuid";
 import { useFirmwareStore } from "./firmwareStore";
+import { getAssetPath } from "src/utils/assets";
 
 interface DeviceState {
   connectedDevice: Protobuf.Mesh.DeviceMetadata | undefined;
@@ -29,13 +30,17 @@ interface DeviceState {
   fetchDeviceList: () => Promise<void>;
   fetchPorts: () => Promise<void>;
   updateDevice: (cleanInstall: boolean) => Promise<void>;
-  startUF2Update: () => Promise<void>;
-  startESP32Update: (clean: boolean) => Promise<void>;
+  startUF2Update: (cleanInstall: boolean) => Promise<void>;
+  copyUF2File: (fileName: string, filePath: string) => Promise<void>;
+  startESP32Update: (cleanInstall: boolean) => Promise<void>;
   getUF2FirmwareFileName: () => string;
+  getUF2EraseFileName: () => string;
   getESP32UpdateFirmwareFileName: () => string;
   getESP32FirmwareFileName: () => string;
   getESP32OtaFileName: () => string;
   getESP32LittleFsFileName: () => string;
+  isSoftDevice7point3: () => boolean;
+  isNRF: () => boolean;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -63,6 +68,15 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       isScanning: false,
     });
   },
+  getUF2EraseFileName: () => {
+    if (!get().isNRF()) {
+      return "pico_erase.uf2";
+    }
+
+    return get().isSoftDevice7point3()
+      ? "nrf_erase_sd7_3.uf2"
+      : "nrf_erase2.uf2";
+  },
   getUF2FirmwareFileName: () => {
     return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.uf2`;
   },
@@ -88,6 +102,13 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   },
   isESP32: () => {
     return get().connectedTarget?.architecture.startsWith("esp32");
+  },
+  isSoftDevice7point3: () => {
+    const sd73Devices = ["WIO_WM1110", "TRACKER_T1000_E"];
+    return sd73Devices.includes(get().connectedTarget?.hwModelSlug);
+  },
+  isNRF: () => {
+    return get().connectedTarget?.architecture.startsWith("nrf52");
   },
   setConnectedDevice: (value: Protobuf.Mesh.DeviceMetadata) => {
     set((state) => {
@@ -139,7 +160,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     // TODO: check for nrf vs ESP32
     if (get().isUF2()) {
       console.info("UF2 device detected.");
-      await get().startUF2Update();
+      await get().startUF2Update(cleanInstall);
     } else if (get().isESP32()) {
       console.info("ESP32 device detected.");
       await get().startESP32Update(cleanInstall);
@@ -208,7 +229,55 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       progressMessage: "Update complete. Unplug & Reboot your device.",
     });
   },
-  startUF2Update: async () => {
+  startUF2Update: async (cleanInstall: boolean) => {
+    if (cleanInstall) {
+      set({ progressMessage: "Starting device wipe..." });
+      const wipeFileName = get().getUF2EraseFileName();
+      const filePath = getAssetPath("uf2", wipeFileName);
+      await get().copyUF2File(wipeFileName, filePath);
+      set({
+        progressMessage: "Device wiped. Waiting for device to restart...",
+      });
+      await sleep(4000);
+    }
+
+    // Check for custom firmware
+    const customFirmwarePath = useFirmwareStore.getState().customFirmwarePath;
+    const customFirmwareFileName =
+      useFirmwareStore.getState().customFirmwareFileName;
+
+    let finalCopyFromPath = undefined;
+    let fileName = undefined;
+
+    if (customFirmwarePath) {
+      finalCopyFromPath = customFirmwarePath;
+      fileName = customFirmwareFileName;
+    } else {
+      set({ progressMessage: "Starting firmware download." });
+
+      // Download firmware to temp dir
+      fileName = get().getUF2FirmwareFileName();
+      const firmwareDownloadUrl = useFirmwareStore
+        .getState()
+        .getFirmwareDownloadUrl(fileName);
+      const fileInfo =
+        await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+      fileName = fileInfo.fileName;
+      finalCopyFromPath = fileInfo.fullPath;
+    }
+
+    set({ progressMessage: "Copying firmware." });
+
+    // Copy the firmware update file
+    await get().copyUF2File(fileName, finalCopyFromPath);
+
+    set({
+      isUpdating: false,
+      finishedUpdate: true,
+      progressMessage: "Update complete. Unplug & Reboot your device.",
+    });
+  },
+  copyUF2File: async (fileName: string, filePath: string) => {
     const driveListBefore = await window.electronAPI.getDrives(uuidv4());
     console.info(
       `USB Drives Attached (pre-DFU): ${JSON.stringify(driveListBefore)}`,
@@ -243,43 +312,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     }
     console.info(`DFU Device Detected: ${JSON.stringify(meshDevice)}`);
 
-    // Check for custom firmware
-    const customFirmwarePath = useFirmwareStore.getState().customFirmwarePath;
-    const customFirmwareFileName =
-      useFirmwareStore.getState().customFirmwareFileName;
-
-    let finalCopyFromPath = undefined;
-    let fileName = undefined;
-
-    if (customFirmwarePath) {
-      finalCopyFromPath = customFirmwarePath;
-      fileName = customFirmwareFileName;
-    } else {
-      set({ progressMessage: "Starting firmware download." });
-
-      // Download firmware to temp dir
-      fileName = get().getUF2FirmwareFileName();
-      const firmwareDownloadUrl = useFirmwareStore
-        .getState()
-        .getFirmwareDownloadUrl(fileName);
-      const fileInfo =
-        await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
-      fileName = fileInfo.fileName;
-      finalCopyFromPath = fileInfo.fullPath;
-    }
-
-    set({ progressMessage: "Copying firmware." });
-
     await window.electronAPI.copyFirmware(
       fileName,
-      finalCopyFromPath,
+      filePath,
       meshDevice.mountpoints[0].path,
     );
-
-    set({
-      isUpdating: false,
-      finishedUpdate: true,
-      progressMessage: "Update complete. Unplug & Reboot your device.",
-    });
   },
 }));
