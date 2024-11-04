@@ -15,7 +15,6 @@ declare global {
     disconnectFromDevice: (path: string) => Promise<void>;
     apiRequest: <T>(url: string) => Promise<T>;
     onDeviceMetadata: (callback: (data: any) => void) => void;
-    getAssetPath: (assetName: string) => string;
     enterDfuMode: () => Promise<void>;
     getDrives: (requestId: string) => Promise<Drive[]>;
     downloadFirmware: (fileUrl: string) => Promise<FileInfo>;
@@ -40,6 +39,7 @@ declare global {
       isUrl: boolean,
     ) => Promise<void>;
     onFlashProgress: (callback: (progress: number) => void) => void;
+    getAssetPath: (...paths: string[]) => Promise<string>;
   }
 
   interface SerialPortInfo {

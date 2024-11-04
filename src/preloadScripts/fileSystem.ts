@@ -9,5 +9,7 @@ export function preloadFileSystemAPIs(ipcRenderer: Electron.IpcRenderer) {
     selectFile: () => ipcRenderer.invoke("select-file"),
     getFilename: (filePath: string) =>
       ipcRenderer.invoke("get-filename", filePath),
+    getAssetPath: (...paths: string[]) =>
+      ipcRenderer.invoke("get-asset-path", ...paths),
   };
 }

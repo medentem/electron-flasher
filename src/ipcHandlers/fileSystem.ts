@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import axios from "axios";
+import { getAssetPath } from "../utils/assets";
 
 let _mainWindow: BrowserWindow | undefined;
 
@@ -50,6 +51,10 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     });
 
     return { fullPath: tempFilePath, fileName: fileName } as FileInfo;
+  });
+
+  ipcMain.handle("get-asset-path", async (_event: any, ...paths: string[]) => {
+    return getAssetPath(...paths);
   });
 
   ipcMain.handle(

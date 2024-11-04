@@ -6,7 +6,7 @@ import type * as Protobuf from "@meshtastic/protobufs";
 import { sleep } from "../utils/promise";
 import { v4 as uuidv4 } from "uuid";
 import { useFirmwareStore } from "./firmwareStore";
-import { getAssetPath } from "src/utils/assets";
+import { getAssetPath } from "../utils/assets";
 
 interface DeviceState {
   connectedDevice: Protobuf.Mesh.DeviceMetadata | undefined;
@@ -233,7 +233,10 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     if (cleanInstall) {
       set({ progressMessage: "Starting device wipe..." });
       const wipeFileName = get().getUF2EraseFileName();
-      const filePath = getAssetPath("uf2", wipeFileName);
+      const filePath = await window.electronAPI.getAssetPath(
+        "uf2",
+        wipeFileName,
+      );
       await get().copyUF2File(wipeFileName, filePath);
       set({
         progressMessage: "Device wiped. Waiting for device to restart...",
