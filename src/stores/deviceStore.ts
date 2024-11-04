@@ -6,7 +6,6 @@ import type * as Protobuf from "@meshtastic/protobufs";
 import { sleep } from "../utils/promise";
 import { v4 as uuidv4 } from "uuid";
 import { useFirmwareStore } from "./firmwareStore";
-import { getAssetPath } from "../utils/assets";
 
 interface DeviceState {
   connectedDevice: Protobuf.Mesh.DeviceMetadata | undefined;
@@ -20,6 +19,7 @@ interface DeviceState {
   deviceImage: string | undefined;
   progressMessage: string | undefined;
   flashProgress: number;
+  cleanInstall: boolean;
   setIsScanning: (val: boolean) => void;
   cleanupPostUpdate: () => void;
   isUF2: () => boolean;
@@ -29,10 +29,10 @@ interface DeviceState {
   setSelectedPort: (value: SerialPortInfo) => void;
   fetchDeviceList: () => Promise<void>;
   fetchPorts: () => Promise<void>;
-  updateDevice: (cleanInstall: boolean) => Promise<void>;
-  startUF2Update: (cleanInstall: boolean) => Promise<void>;
+  updateDevice: () => Promise<void>;
+  startUF2Update: () => Promise<void>;
   copyUF2File: (fileName: string, filePath: string) => Promise<void>;
-  startESP32Update: (cleanInstall: boolean) => Promise<void>;
+  startESP32Update: () => Promise<void>;
   getUF2FirmwareFileName: () => string;
   getUF2EraseFileName: () => string;
   getESP32UpdateFirmwareFileName: () => string;
@@ -41,6 +41,7 @@ interface DeviceState {
   getESP32LittleFsFileName: () => string;
   isSoftDevice7point3: () => boolean;
   isNRF: () => boolean;
+  setCleanInstall: (val: boolean) => void;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -54,6 +55,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   isScanning: false,
   finishedUpdate: false,
   progressMessage: undefined,
+  cleanInstall: false,
   flashProgress: 0,
   setIsScanning: (val: boolean) => {
     set({ isScanning: val });
@@ -66,7 +68,11 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       deviceImage: undefined,
       isUpdating: false,
       isScanning: false,
+      cleanInstall: false,
     });
+  },
+  setCleanInstall: (val: boolean) => {
+    set({ cleanInstall: val });
   },
   getUF2EraseFileName: () => {
     if (!get().isNRF()) {
@@ -154,21 +160,21 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     const portsList = await window.electronAPI.getSerialPorts();
     set({ availablePorts: portsList, isScanning: false });
   },
-  updateDevice: async (cleanInstall: boolean) => {
+  updateDevice: async () => {
     set({ isUpdating: true, progressMessage: "Checking device type." });
 
     // TODO: check for nrf vs ESP32
     if (get().isUF2()) {
       console.info("UF2 device detected.");
-      await get().startUF2Update(cleanInstall);
+      await get().startUF2Update();
     } else if (get().isESP32()) {
       console.info("ESP32 device detected.");
-      await get().startESP32Update(cleanInstall);
+      await get().startESP32Update();
     } else {
       // ERROR
     }
   },
-  startESP32Update: async (cleanInstall: boolean) => {
+  startESP32Update: async () => {
     if (!get().selectedPort) {
       return;
     }
@@ -183,6 +189,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     let fileName = undefined;
     let otaFileName = undefined;
     let littleFsFileName = undefined;
+    const cleanInstall = get().cleanInstall;
 
     if (customFirmwarePath) {
       set({ progressMessage: "Reading custom firmware." });
@@ -192,15 +199,13 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       littleFsFileName = customFirmwareFileName;
     } else {
       set({ progressMessage: "Starting firmware download." });
-      fullPath = useFirmwareStore.getState().getFirmwareDownloadUrl(fileName);
       fileName = cleanInstall
         ? get().getESP32FirmwareFileName()
         : get().getESP32UpdateFirmwareFileName();
       otaFileName = get().getESP32OtaFileName();
       littleFsFileName = get().getESP32LittleFsFileName();
+      fullPath = useFirmwareStore.getState().getFirmwareDownloadUrl(fileName);
     }
-
-    set({ progressMessage: "Starting update download." });
 
     window.electronAPI.onFlashProgress((progress: number) => {
       set({
@@ -229,7 +234,8 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       progressMessage: "Update complete. Unplug & Reboot your device.",
     });
   },
-  startUF2Update: async (cleanInstall: boolean) => {
+  startUF2Update: async () => {
+    const cleanInstall = get().cleanInstall;
     if (cleanInstall) {
       set({ progressMessage: "Starting device wipe..." });
       const wipeFileName = get().getUF2EraseFileName();

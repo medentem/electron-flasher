@@ -6,8 +6,12 @@ import { TrashIcon } from "@heroicons/react/24/solid";
 import Toaster from "./Toaster";
 import ToolTip from "./ToolTip";
 
-export default function DeviceCard() {
-  const [cleanInstall, setCleanInstall] = useState(false);
+export interface DeviceCardProps {
+  onUpdateClick: () => void;
+}
+
+export default function DeviceCard(props: DeviceCardProps) {
+  const { onUpdateClick } = props;
   const [showToaster, setShowToaster] = useState(false);
   const [toasterPrimaryMessage, setToasterPrimaryMessage] = useState(
     "Your device will be wiped clean!",
@@ -26,13 +30,14 @@ export default function DeviceCard() {
   const setIsScanning = useDeviceStore((state) => state.setIsScanning);
   const isUpdating = useDeviceStore((state) => state.isUpdating);
   const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
-  const updateDevice = useDeviceStore((state) => state.updateDevice);
   const setConnectedDevice = useDeviceStore(
     (state) => state.setConnectedDevice,
   );
   const fetchDeviceList = useDeviceStore((state) => state.fetchDeviceList);
   const fetchPorts = useDeviceStore((state) => state.fetchPorts);
   const cleanupPostUpdate = useDeviceStore((state) => state.cleanupPostUpdate);
+  const cleanInstall = useDeviceStore((state) => state.cleanInstall);
+  const setCleanInstall = useDeviceStore((state) => state.setCleanInstall);
 
   useEffect(() => {
     fetchDeviceList();
@@ -99,7 +104,7 @@ export default function DeviceCard() {
   ]);
 
   const lclUpdateDevice = async () => {
-    updateDevice(cleanInstall);
+    onUpdateClick();
   };
 
   const scanForDevice = async () => {
@@ -111,7 +116,7 @@ export default function DeviceCard() {
   };
 
   const toggleCleanInstall = async () => {
-    setCleanInstall((prevVal) => !prevVal);
+    setCleanInstall(!cleanInstall);
   };
 
   const onCloseToaster = async () => {

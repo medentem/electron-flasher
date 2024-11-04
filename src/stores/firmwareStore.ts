@@ -16,6 +16,7 @@ interface FirmwareState {
   setFirmwareRollup: (firmwareRollup: FirmwareResource[]) => void;
   getFirmwareReleases: () => Promise<void>;
   getFirmwareDownloadUrl: (fileName: string) => string;
+  hasCustomFirmware: () => boolean;
 }
 
 export const useFirmwareStore = create<FirmwareState>((set, get) => ({
@@ -27,6 +28,9 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   selectedFirmware: undefined,
   customFirmwarePath: undefined,
   customFirmwareFileName: undefined,
+  hasCustomFirmware: () => {
+    return get().customFirmwareFileName !== undefined;
+  },
   setSelectedFirmware: (selectedFirmwareId: string) => {
     const firmware = get().firmwareRollup.find(
       (x) => x.id === selectedFirmwareId,
