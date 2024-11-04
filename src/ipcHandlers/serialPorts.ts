@@ -214,6 +214,15 @@ async function getDeviceNameLinux(
   return deviceName;
 }
 
+function parseSymlinkName(symlinkName: string): string {
+  // Replace underscores with spaces and remove prefixes
+  const name = symlinkName
+    .replace(/_/g, " ")
+    .replace(/^usb-/, "")
+    .replace(/-if.*$/, "");
+  return name;
+}
+
 async function getDeviceNameFromSymlinks(
   portPath: string,
 ): Promise<string | undefined> {
@@ -224,7 +233,8 @@ async function getDeviceNameFromSymlinks(
       const symlinkPath = path.join(symlinkDir, file);
       const realPath = await fs.promises.realpath(symlinkPath);
       if (realPath === portPath) {
-        return file; // The symlink name contains the device information
+        const deviceName = parseSymlinkName(file);
+        return deviceName;
       }
     }
   } catch (error) {
