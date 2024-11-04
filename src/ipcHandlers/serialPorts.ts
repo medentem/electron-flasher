@@ -1,8 +1,8 @@
 // src/ipcHandlers/serialPorts.ts
 
-import { ipcMain } from "electron";
+import { ipcMain, WebContentsView } from "electron";
 import { SerialPort as ElectronSerialPort } from "serialport";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import wmi from "node-wmi";
 import plist from "plist";
 import type { BrowserWindow } from "electron/main";
@@ -19,6 +19,7 @@ import {
 import axios from "axios";
 import { ElectronSerialPortWrapper } from "../utils/electronSerialPortWrapper";
 import fs from "node:fs";
+import path from "node:path";
 
 let _mainWindow: BrowserWindow | undefined;
 let connection: ElectronSerialConnection | undefined;
@@ -60,28 +61,45 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   });
 
   ipcMain.handle(
+    "clean-update-esp32",
+    async (_event: any, filePath: string) => {
+      console.info("Handling clean-update-esp32.");
+      const webSerialPort = await getBaud1200Port();
+      const transport = new Transport(webSerialPort, true);
+      const espLoader = await this.connectEsp32(transport);
+      const appContent = await this.fetchBinaryContent(fileName);
+      const otaContent = await this.fetchBinaryContent(otaFileName);
+      const littleFsContent = await this.fetchBinaryContent(littleFsFileName);
+      this.isFlashing = true;
+      const flashOptions: FlashOptions = {
+        fileArray: [
+          { data: appContent, address: 0x00 },
+          { data: otaContent, address: 0x260000 },
+          { data: littleFsContent, address: 0x300000 },
+        ],
+        flashSize: "keep",
+        eraseAll: true,
+        compress: true,
+        flashMode: "keep",
+        flashFreq: "keep",
+        reportProgress: (fileIndex, written, total) => {
+          const flashPercentDone = Math.round((written / total) * 100);
+          _mainWindow.webContents.send("on-flash-progress", flashPercentDone);
+          console.info(`Flash Progres: ${flashPercentDone}`);
+          if (written === total) {
+            console.info("Done flashing!");
+          }
+        },
+      };
+      await this.startWrite(espLoader, transport, flashOptions);
+    },
+  );
+
+  ipcMain.handle(
     "update-esp32",
     async (_event: any, fileName: string, filePath: string, isUrl: boolean) => {
       console.info("Handling update-esp32.");
-
-      const portList = await getEnrichedPorts();
-      console.info(`New Port List: ${JSON.stringify(portList)}`);
-      const baud1200Port = portList.find(
-        (x) =>
-          x.deviceName.toLowerCase().includes("jtag") ||
-          x.manufacturer?.toLowerCase().includes("expressif"),
-      );
-      console.info(`Found Port: ${JSON.stringify(baud1200Port)}`);
-
-      const webSerialPort = new ElectronSerialPortWrapper(
-        baud1200Port.path,
-        115200,
-        {
-          usbProductId: Number.parseInt(baud1200Port.productId, 16),
-          usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
-        },
-        false,
-      );
+      const webSerialPort = await getBaud1200Port();
       const transport = new Transport(webSerialPort, true);
       const espLoader = await connectEsp32(transport);
       const content = await fetchBinaryContent(fileName, filePath, isUrl);
@@ -118,6 +136,28 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
   });
 }
 
+async function getBaud1200Port() {
+  const portList = await getEnrichedPorts();
+  console.info(`New Port List: ${JSON.stringify(portList)}`);
+  const baud1200Port = portList.find(
+    (x) =>
+      x.deviceName.toLowerCase().includes("jtag") ||
+      x.manufacturer?.toLowerCase().includes("expressif"),
+  );
+  console.info(`Found Port: ${JSON.stringify(baud1200Port)}`);
+
+  const webSerialPort = new ElectronSerialPortWrapper(
+    baud1200Port.path,
+    115200,
+    {
+      usbProductId: Number.parseInt(baud1200Port.productId, 16),
+      usbVendorId: Number.parseInt(baud1200Port.vendorId, 16),
+    },
+    false,
+  );
+  return webSerialPort;
+}
+
 async function baud1200(path: string) {
   /** Set device if specified, else request. */
   port = new ElectronSerialPort({
@@ -151,6 +191,8 @@ async function getEnrichedPorts() {
         if (wmiDevice) {
           deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
         }
+      } else if (process.platform === "linux") {
+        deviceName = await getDeviceNameLinux(port.path);
       }
       return {
         ...port,
@@ -160,6 +202,67 @@ async function getEnrichedPorts() {
   );
   console.log(enrichedPorts);
   return enrichedPorts;
+}
+
+async function getDeviceNameLinux(
+  portPath: string,
+): Promise<string | undefined> {
+  let deviceName = await getDeviceNameFromSymlinks(portPath);
+  if (!deviceName) {
+    deviceName = await getDeviceNameFromUdevadm(portPath);
+  }
+  return deviceName;
+}
+
+async function getDeviceNameFromSymlinks(
+  portPath: string,
+): Promise<string | undefined> {
+  const symlinkDir = "/dev/serial/by-id/";
+  try {
+    const files = await fs.promises.readdir(symlinkDir);
+    for (const file of files) {
+      const symlinkPath = path.join(symlinkDir, file);
+      const realPath = await fs.promises.realpath(symlinkPath);
+      if (realPath === portPath) {
+        return file; // The symlink name contains the device information
+      }
+    }
+  } catch (error) {
+    console.error("Error reading symlink directory:", error);
+  }
+  return undefined;
+}
+
+async function getDeviceNameFromUdevadm(
+  portPath: string,
+): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    execFile(
+      "udevadm",
+      ["info", "--query=property", `--name=${portPath}`],
+      (error, stdout) => {
+        if (error) {
+          console.error("Error executing udevadm:", error);
+          resolve(undefined);
+          return;
+        }
+
+        const properties = stdout
+          .split("\n")
+          .reduce((acc: Record<string, string>, line) => {
+            const [key, value] = line.split("=");
+            if (key && value) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {});
+
+        const deviceName =
+          properties.ID_MODEL || properties.ID_SERIAL || properties.ID_VENDOR;
+        resolve(deviceName);
+      },
+    );
+  });
 }
 
 async function connectToDevice(path: string) {
@@ -198,7 +301,10 @@ async function getDeviceNameForMacOS(
   portSerial: string,
 ): Promise<string | undefined> {
   return new Promise((resolve) => {
-    exec("ioreg -p IOUSB -l -a", (error, stdout) => {
+    const command = "ioreg";
+    const args = ["-p", "IOUSB", "-l", "-a"];
+
+    execFile(command, args, (error, stdout) => {
       if (error) {
         console.error("Error executing ioreg:", error);
         resolve(undefined);

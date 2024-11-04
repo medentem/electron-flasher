@@ -12,7 +12,7 @@ export function preloadSerialPortAPIs(ipcRenderer: Electron.IpcRenderer) {
     updateEsp32: (fileName: string, filePath: string, isUrl: boolean) =>
       ipcRenderer.invoke("update-esp32", fileName, filePath, isUrl),
     onFlashProgress: (callback: (progress: number) => void) =>
-      ipcRenderer.on("on-flash-progresss", (_event, progress) =>
+      ipcRenderer.on("on-flash-progress", (_event, progress) =>
         callback(progress),
       ),
   };

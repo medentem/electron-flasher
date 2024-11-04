@@ -32,7 +32,7 @@ interface DeviceState {
   startUF2Update: () => Promise<void>;
   startESP32Update: () => Promise<void>;
   getUF2FirmwareFileName: () => string;
-  getESP32FirmwareFileName: () => string;
+  getESP32UpdateFirmwareFileName: () => string;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -63,8 +63,19 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   getUF2FirmwareFileName: () => {
     return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.uf2`;
   },
-  getESP32FirmwareFileName: () => {
+  getESP32UpdateFirmwareFileName: () => {
     return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}-update.bin`;
+  },
+  getESP32FirmwareFileName: () => {
+    return `firmware-${get().connectedTarget?.platformioTarget}-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.bin`;
+  },
+  getESP32OtaFileName: () => {
+    return get().connectedTarget?.architecture === "esp32-s3"
+      ? "bleota-s3.bin"
+      : "bleota.bin";
+  },
+  getESP32LittleFsFileName: () => {
+    return `littlefs-${useFirmwareStore.getState().selectedFirmware?.id.replace("v", "")}.bin`;
   },
   isUF2: () => {
     return (
@@ -153,7 +164,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       fileName = customFirmwareFileName;
     } else {
       set({ progressMessage: "Starting firmware download." });
-      fileName = get().getESP32FirmwareFileName();
+      fileName = get().getESP32UpdateFirmwareFileName();
       fullPath = useFirmwareStore.getState().getFirmwareDownloadUrl(fileName);
     }
 
