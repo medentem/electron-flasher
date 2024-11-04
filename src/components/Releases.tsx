@@ -2,6 +2,7 @@ import { useFirmwareStore } from "../stores/firmwareStore";
 import MeshtasticIcon from "./MeshtasticIcon";
 import { FolderPlusIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
+import ToolTip from "./ToolTip";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -136,10 +137,12 @@ export default function Releases() {
             </h3>
           </div>
           <div className="min-w-0 flex 1">
-            <FolderPlusIcon
-              className="text-gray-500 size-6 cursor-pointer"
-              onClick={openFilePicker}
-            />
+            <ToolTip tooltip="Custom Firmware?">
+              <FolderPlusIcon
+                className="text-gray-500 size-6 cursor-pointer"
+                onClick={openFilePicker}
+              />
+            </ToolTip>
           </div>
         </div>
       </div>

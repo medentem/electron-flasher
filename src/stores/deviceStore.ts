@@ -28,11 +28,14 @@ interface DeviceState {
   setSelectedPort: (value: SerialPortInfo) => void;
   fetchDeviceList: () => Promise<void>;
   fetchPorts: () => Promise<void>;
-  updateDevice: () => Promise<void>;
+  updateDevice: (cleanInstall: boolean) => Promise<void>;
   startUF2Update: () => Promise<void>;
-  startESP32Update: () => Promise<void>;
+  startESP32Update: (clean: boolean) => Promise<void>;
   getUF2FirmwareFileName: () => string;
   getESP32UpdateFirmwareFileName: () => string;
+  getESP32FirmwareFileName: () => string;
+  getESP32OtaFileName: () => string;
+  getESP32LittleFsFileName: () => string;
 }
 
 export const useDeviceStore = create<DeviceState>((set, get) => ({
@@ -130,7 +133,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
     const portsList = await window.electronAPI.getSerialPorts();
     set({ availablePorts: portsList, isScanning: false });
   },
-  updateDevice: async () => {
+  updateDevice: async (cleanInstall: boolean) => {
     set({ isUpdating: true, progressMessage: "Checking device type." });
 
     // TODO: check for nrf vs ESP32
@@ -139,12 +142,12 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       await get().startUF2Update();
     } else if (get().isESP32()) {
       console.info("ESP32 device detected.");
-      await get().startESP32Update();
+      await get().startESP32Update(cleanInstall);
     } else {
       // ERROR
     }
   },
-  startESP32Update: async () => {
+  startESP32Update: async (cleanInstall: boolean) => {
     if (!get().selectedPort) {
       return;
     }
@@ -157,15 +160,23 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
 
     let fullPath = undefined;
     let fileName = undefined;
+    let otaFileName = undefined;
+    let littleFsFileName = undefined;
 
     if (customFirmwarePath) {
       set({ progressMessage: "Reading custom firmware." });
       fullPath = customFirmwarePath;
       fileName = customFirmwareFileName;
+      otaFileName = customFirmwareFileName;
+      littleFsFileName = customFirmwareFileName;
     } else {
       set({ progressMessage: "Starting firmware download." });
-      fileName = get().getESP32UpdateFirmwareFileName();
       fullPath = useFirmwareStore.getState().getFirmwareDownloadUrl(fileName);
+      fileName = cleanInstall
+        ? get().getESP32FirmwareFileName()
+        : get().getESP32UpdateFirmwareFileName();
+      otaFileName = get().getESP32OtaFileName();
+      littleFsFileName = get().getESP32LittleFsFileName();
     }
 
     set({ progressMessage: "Starting update download." });
@@ -176,11 +187,21 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
         progressMessage: `Flashing ${progress}%`,
       });
     });
-    await window.electronAPI.updateEsp32(
-      fileName,
-      fullPath,
-      !customFirmwarePath,
-    );
+    if (cleanInstall) {
+      await window.electronAPI.cleanUpdateEsp32(
+        fileName,
+        otaFileName,
+        littleFsFileName,
+        fullPath,
+        !customFirmwarePath,
+      );
+    } else {
+      await window.electronAPI.updateEsp32(
+        fileName,
+        fullPath,
+        !customFirmwarePath,
+      );
+    }
     set({ progressMessage: "Update complete! Reboot your device." });
   },
   startUF2Update: async () => {

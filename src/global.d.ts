@@ -32,6 +32,13 @@ declare global {
       filePath: string,
       isUrl: boolean,
     ) => Promise<void>;
+    cleanUpdateEsp32: (
+      fileName: string,
+      otaFileName: string,
+      littleFsFileName: string,
+      filePath: string,
+      isUrl: boolean,
+    ) => Promise<void>;
     onFlashProgress: (callback: (progress: number) => void) => void;
   }
 

@@ -62,14 +62,33 @@ export function registerSerialPortHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle(
     "clean-update-esp32",
-    async (_event: any, filePath: string) => {
+    async (
+      _event: any,
+      fileName: string,
+      otaFileName: string,
+      littleFsFileName: string,
+      filePath: string,
+      isUrl: boolean,
+    ) => {
       console.info("Handling clean-update-esp32.");
       const webSerialPort = await getBaud1200Port();
       const transport = new Transport(webSerialPort, true);
       const espLoader = await this.connectEsp32(transport);
-      const appContent = await this.fetchBinaryContent(fileName);
-      const otaContent = await this.fetchBinaryContent(otaFileName);
-      const littleFsContent = await this.fetchBinaryContent(littleFsFileName);
+      const appContent = await this.fetchBinaryContent(
+        fileName,
+        filePath,
+        isUrl,
+      );
+      const otaContent = await this.fetchBinaryContent(
+        otaFileName,
+        filePath,
+        isUrl,
+      );
+      const littleFsContent = await this.fetchBinaryContent(
+        littleFsFileName,
+        filePath,
+        isUrl,
+      );
       this.isFlashing = true;
       const flashOptions: FlashOptions = {
         fileArray: [
