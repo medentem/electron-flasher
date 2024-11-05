@@ -54,7 +54,7 @@ export default function WelcomeDialog(props: WelcomeDialogProps) {
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
                     Power on your device and plug it into your computer. Then
-                    click the "Scan for Device" button.
+                    click the "Scan for Device" button once it has booted up.
                   </p>
                   <div className="flex flex-row justify-center content-center align-middle">
                     <div className="flex-0">

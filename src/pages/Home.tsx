@@ -22,11 +22,13 @@ const Home: React.FC = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
+    setShowWelcomeModal(true);
+    /*
     const hasSeenModal = localStorage.getItem("hasSeenModal");
 
     if (!hasSeenModal) {
-      setShowWelcomeModal(true);
     }
+    */
   }, []);
 
   const onUpdateClick = () => {

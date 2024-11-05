@@ -93,3 +93,6 @@ out/
 
 # Tailwind CSS cache (if any)
 .tailwindcache/
+
+# Compiled assets
+dist/
