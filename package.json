@@ -10,7 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "postinstall": "electron-rebuild"
+    "postinstall": "electron-builder install-app-deps"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.5.0",
@@ -31,6 +31,7 @@
     "@typescript-eslint/parser": "^5.62.0",
     "autoprefixer": "^10.4.20",
     "electron": "32.1.2",
+    "electron-builder": "^25.1.8",
     "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",

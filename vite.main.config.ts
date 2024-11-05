@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: ["serialport", "drivelist"],
+      external: [
+        "serialport",
+        "drivelist",
+        ...require("node:module").builtinModules,
+      ],
     },
   },
 });

@@ -20,7 +20,7 @@ const config: ForgeConfig = {
   ],
   rebuildConfig: {
     force: true,
-    onlyModules: ["serialport"],
+    onlyModules: ["serialport", "drivelist"],
   },
   plugins: [
     new AutoUnpackNativesPlugin({}),
