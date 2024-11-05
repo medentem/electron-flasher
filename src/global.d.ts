@@ -40,6 +40,7 @@ declare global {
     ) => Promise<void>;
     onFlashProgress: (callback: (progress: number) => void) => void;
     getAssetPath: (...paths: string[]) => Promise<string>;
+    getImageData: (...paths: string[]) => Promise<string>;
   }
 
   interface SerialPortInfo {

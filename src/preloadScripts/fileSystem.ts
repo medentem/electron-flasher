@@ -11,5 +11,7 @@ export function preloadFileSystemAPIs(ipcRenderer: Electron.IpcRenderer) {
       ipcRenderer.invoke("get-filename", filePath),
     getAssetPath: (...paths: string[]) =>
       ipcRenderer.invoke("get-asset-path", ...paths),
+    getImageData: (...paths: string[]) =>
+      ipcRenderer.invoke("get-image-data", ...paths),
   };
 }

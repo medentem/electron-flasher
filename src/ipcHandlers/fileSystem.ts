@@ -57,6 +57,13 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     return getAssetPath(...paths);
   });
 
+  ipcMain.handle("get-image-data", async (_event: any, ...paths: string[]) => {
+    const imagePath = getAssetPath(...paths);
+    const file = fs.readFileSync(imagePath);
+    const base64Data = file.toString("base64");
+    return base64Data;
+  });
+
   ipcMain.handle(
     "copy-firmware",
     async (_event: any, fileName: string, fromPath: string, toPath: string) => {

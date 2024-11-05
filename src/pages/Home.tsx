@@ -7,9 +7,11 @@ import { useFirmwareStore } from "../stores/firmwareStore";
 import { useEffect, useState } from "react";
 import { useDeviceStore } from "../stores/deviceStore";
 import SuccessDialog from "../components/SuccessDialog";
+import WelcomeDialog from "../components/WelcomeDialog";
 
 const Home: React.FC = () => {
   const selectedFirmware = useFirmwareStore((state) => state.selectedFirmware);
+  const fetchPorts = useDeviceStore((state) => state.fetchPorts);
   const updateDevice = useDeviceStore((state) => state.updateDevice);
   const finishedUpdate = useDeviceStore((state) => state.finishedUpdate);
   const hasCustomFirmware = useFirmwareStore(
@@ -17,6 +19,15 @@ const Home: React.FC = () => {
   );
   const [openReleaseNotes, setOpenReleaseNotes] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    const hasSeenModal = localStorage.getItem("hasSeenModal");
+
+    if (!hasSeenModal) {
+      setShowWelcomeModal(true);
+    }
+  }, []);
 
   const onUpdateClick = () => {
     if (hasCustomFirmware()) {
@@ -36,6 +47,12 @@ const Home: React.FC = () => {
 
   const successDialogDismissed = () => {
     setOpenSuccessDialog(false);
+  };
+
+  const welcomeDialogDismissed = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem("hasSeenModal", "true");
+    fetchPorts();
   };
 
   useEffect(() => {
@@ -69,6 +86,7 @@ const Home: React.FC = () => {
         open={openSuccessDialog}
         onClose={successDialogDismissed}
       />
+      <WelcomeDialog open={showWelcomeModal} onClose={welcomeDialogDismissed} />
     </>
   );
 };
