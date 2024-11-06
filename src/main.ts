@@ -4,6 +4,14 @@ import { registerApiHandlers } from "./ipcHandlers/api";
 import path from "node:path";
 import { registerFileSystemHandlers } from "./ipcHandlers/fileSystem";
 
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
@@ -65,14 +73,6 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
-});
-
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
 // In this file you can include the rest of your app's specific main process
