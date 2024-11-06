@@ -10,8 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "postinstall": "electron-builder install-app-deps",
-    "eb": "electron-builder"
+    "postinstall": "electron-rebuild"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.5.0",
