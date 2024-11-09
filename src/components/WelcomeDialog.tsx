@@ -58,11 +58,13 @@ export default function WelcomeDialog(props: WelcomeDialogProps) {
                   </p>
                   <div className="flex flex-row justify-center content-center align-middle">
                     <div className="flex-0">
-                      <img
-                        src={`data:image/gif;base64,${pluginGifData}`}
-                        alt="device plugging in"
-                        className="object-contain h-48"
-                      />
+                      {pluginGifData && (
+                        <img
+                          src={`data:image/gif;base64,${pluginGifData}`}
+                          alt="device plugging in"
+                          className="object-contain h-48"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
