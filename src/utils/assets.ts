@@ -6,7 +6,7 @@ export function getAssetPath(...paths: string[]) {
 
   if (isDev) {
     // During development
-    return path.join(__dirname, "..", "..", "public", ...paths);
+    return path.join(__dirname, "..", "public", ...paths);
   }
 
   // In production, after packaging

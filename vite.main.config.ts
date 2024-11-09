@@ -1,16 +1,17 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { builtinModules } from "node:module";
 
-// https://vitejs.dev/config
 export default defineConfig({
-  plugins: [react()],
   build: {
     sourcemap: true,
+    outDir: ".vite", // Output directory set to .vite
+    emptyOutDir: true,
+    lib: {
+      entry: "src/main.ts",
+      formats: ["cjs"],
+    },
     rollupOptions: {
-      external: [
-        "serialport",
-        "drivelist"
-      ],
+      external: ["electron", ...builtinModules, "serialport", "drivelist"],
     },
   },
 });

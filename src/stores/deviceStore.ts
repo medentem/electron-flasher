@@ -245,9 +245,9 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       );
       await get().copyUF2File(wipeFileName, filePath);
       set({
-        progressMessage: "Device wiped. Waiting for device to restart...",
+        progressMessage: "Device wiped. Waiting for device to restart (10s)...",
       });
-      await sleep(5000);
+      await sleep(10000);
     }
 
     // Check for custom firmware

@@ -4,6 +4,8 @@ import { registerApiHandlers } from "./ipcHandlers/api";
 import path from "node:path";
 import { registerFileSystemHandlers } from "./ipcHandlers/fileSystem";
 
+const isDev = !app.isPackaged;
+
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
 });
@@ -27,25 +29,25 @@ const createWindow = () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload/preload.js"),
     },
   });
 
   try {
     // and load the index.html of the app.
-    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    if (isDev && MAIN_WINDOW_VITE_DEV_SERVER_URL) {
       mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     } else {
-      mainWindow.loadFile(path.join(__dirname, "../index.html"));
+      mainWindow.loadFile(path.join(__dirname, "renderer/index.html"));
     }
   } catch (e: any) {
     console.error("Error loading main window:", e);
   }
 
   // Open the DevTools.
-  if (process.env.NODE_ENV === "development") {
-    mainWindow.webContents.openDevTools();
-  }
+  //if (process.env.NODE_ENV === "development") {
+  mainWindow.webContents.openDevTools();
+  //}
 };
 
 // This method will be called when Electron has finished
