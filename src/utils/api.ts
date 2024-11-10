@@ -4,7 +4,7 @@ export function createUrl(relativeUrl: string) {
     host = "api.meshtastic.org";
     relativeUrl = relativeUrl.replace("api/", "");
   }
-  const base = `${window.location.protocol}//${host}`;
+  const base = `https://${host}`;
   const fullUrl = `${base}/${relativeUrl}`;
   console.info(`API URL: ${fullUrl}`);
   return fullUrl;
