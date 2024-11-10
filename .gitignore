@@ -88,9 +88,6 @@ typings/
 # Vite
 .vite/
 
-# Electron-Forge
-out/
-
 # Tailwind CSS cache (if any)
 .tailwindcache/
 
