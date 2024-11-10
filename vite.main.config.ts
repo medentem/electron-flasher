@@ -5,7 +5,6 @@ export default defineConfig({
   build: {
     sourcemap: true,
     outDir: ".vite", // Output directory set to .vite
-    emptyOutDir: true,
     lib: {
       entry: "src/main.ts",
       formats: ["cjs"],
