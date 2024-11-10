@@ -10,5 +10,5 @@ export function getAssetPath(...paths: string[]) {
   }
 
   // In production, after packaging
-  return path.join(process.resourcesPath, ...paths);
+  return path.join(__dirname, ...paths);
 }
