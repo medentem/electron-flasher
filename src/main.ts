@@ -45,7 +45,7 @@ const createWindow = () => {
   }
 
   // Open the DevTools.
-  if (process.env.NODE_ENV === "development") {
+  if (isDev) {
     mainWindow.webContents.openDevTools();
   }
 };
