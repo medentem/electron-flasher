@@ -1,4 +1,5 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
+import * as path from "node:path";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
@@ -13,6 +14,23 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     ignore: [/\/\.(?!vite)/],
+    osxSign: {
+      identity: `Developer ID Application: Medentem LLC (${process.env.APPLE_TEAM_ID || ""})`,
+      optionsForFile: (_filePath) => {
+        // Here, we keep it simple and return a single entitlements.plist file.
+        // You can use this callback to map different sets of entitlements
+        // to specific files in your packaged app.
+        return {
+          entitlements: path.resolve(__dirname, "entitlements.plist"),
+        };
+      },
+      type: "distribution",
+    },
+    osxNotarize: {
+      appleId: process.env.APPLE_ID || "",
+      appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD || "",
+      teamId: process.env.APPLE_TEAM_ID || "",
+    },
   },
   makers: [
     new MakerSquirrel({}),
@@ -23,7 +41,7 @@ const config: ForgeConfig = {
   ],
   rebuildConfig: {
     force: true,
-    onlyModules: ["serialport", "drivelist"],
+    onlyModules: ["serialport", "drivelist", "platformio-node-helpers"],
   },
   plugins: [
     new AutoUnpackNativesPlugin({}),

@@ -10,7 +10,13 @@ export default defineConfig({
       formats: ["cjs"],
     },
     rollupOptions: {
-      external: ["electron", ...builtinModules, "serialport", "drivelist"],
+      external: [
+        "electron",
+        ...builtinModules,
+        "serialport",
+        "drivelist",
+        "platformio-node-helpers",
+      ],
     },
   },
 });
