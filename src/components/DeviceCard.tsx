@@ -70,7 +70,7 @@ export default function DeviceCard(props: DeviceCardProps) {
       setIsScanning(true);
       // Find the first PORT that matches ANY of the known meshtastic device characteristics (platformio, name, architecture)
       // We're using a metal detector on hackstack to find the needle here
-      const matchingPort = availablePorts.find((x) => {
+      let matchingPort = availablePorts.find((x) => {
         const matchingTargets = availableTargets.find((y) => {
           const deviceNameLower = x.deviceName?.toLowerCase();
           return (
@@ -81,6 +81,12 @@ export default function DeviceCard(props: DeviceCardProps) {
         });
         return matchingTargets;
       });
+
+      // If there weren't any matching ports, just pick the last one
+      if (!matchingPort) {
+        matchingPort = availablePorts[availablePorts.length - 1];
+      }
+
       setSelectedPort(matchingPort);
       // If we found a port that is likely to be a meshtastic device, connect to it to extract DeviceMetadata
       if (matchingPort) {
