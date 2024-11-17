@@ -27,7 +27,24 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      # macOS-specific steps for code signing and notarization
+      - name: Decode and Import Certificate
+        if: matrix.os == 'macos-latest'
+        env:
+          CERTIFICATE_DATA: ${{ secrets.MACOS_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$CERTIFICATE_DATA" | base64 --decode > signing_certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import signing_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+
       - name: Build Electron App
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
         run: npx electron-forge make
 
       - name: Upload Artifacts
