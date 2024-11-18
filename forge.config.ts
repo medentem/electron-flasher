@@ -21,7 +21,14 @@ const config: ForgeConfig = {
         // You can use this callback to map different sets of entitlements
         // to specific files in your packaged app.
         return {
+          hardenedRuntime: true,
           entitlements: path.resolve(__dirname, "entitlements.plist"),
+          signatureFlags: "library",
+          requirements: undefined,
+          "entitlements-inherit": path.resolve(__dirname, "entitlements.plist"),
+          "gatekeeper-assess": false,
+          deep: true,
+          force: true,
         };
       },
       type: "distribution",
