@@ -1,5 +1,4 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
-import * as path from "node:path";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
@@ -14,36 +13,28 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     ignore: [/\/\.(?!vite)/],
+    appBundleId: "com.medentem.meshtastic-updater",
     osxSign: {
-      identity: `Developer ID Application: Medentem LLC (${process.env.APPLE_TEAM_ID || ""})`,
+      identity: "Developer ID Application: Medentem LLC (A68V7LS529)",
       optionsForFile: (_filePath) => {
-        // Here, we keep it simple and return a single entitlements.plist file.
-        // You can use this callback to map different sets of entitlements
-        // to specific files in your packaged app.
         return {
           hardenedRuntime: true,
-          entitlements: path.resolve(__dirname, "entitlements.plist"),
+          entitlements: "entitlements.plist",
+          entitlementsInherit: "entitlements.plist",
           signatureFlags: "library",
           requirements: undefined,
-          "entitlements-inherit": path.resolve(__dirname, "entitlements.plist"),
-          "gatekeeper-assess": false,
           deep: true,
           force: true,
+          verbose: true,
+          gatekeeperAssess: false,
         };
       },
-      type: "distribution",
     },
-    osxNotarize:
-      process.platform === "darwin" &&
-      process.env.APPLE_ID &&
-      process.env.APPLE_APP_SPECIFIC_PASSWORD &&
-      process.env.APPLE_TEAM_ID
-        ? {
-            appleId: process.env.APPLE_ID,
-            appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
-            teamId: process.env.APPLE_TEAM_ID,
-          }
-        : undefined,
+    osxNotarize: {
+      appleId: process.env.APPLE_ID || "",
+      appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD || "",
+      teamId: process.env.APPLE_TEAM_ID || "",
+    },
   },
   makers: [
     new MakerSquirrel({}),
