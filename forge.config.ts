@@ -27,6 +27,7 @@ const config: ForgeConfig = {
           force: true,
           verbose: true,
           gatekeeperAssess: false,
+          noLegacySigning: true,
         };
       },
     },
