@@ -26,7 +26,7 @@ const config: ForgeConfig = {
           requirements: undefined,
           strictVerify: false,
           gatekeeperAssess: false,
-          additionalArguments: ["--force", "--verbose"],
+          additionalArguments: ["--verbose"],
         };
       },
     },
