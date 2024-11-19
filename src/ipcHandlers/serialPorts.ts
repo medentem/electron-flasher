@@ -196,10 +196,11 @@ async function getEnrichedPorts() {
         const wmiData = await getWmiDeviceInfo();
         console.log(wmiData);
         const wmiDevice = wmiData.find(
-          (device) => device.DeviceID === port.pnpId,
+          (device) =>
+            device.DeviceID === port.pnpId || device.DeviceID === port.path,
         );
         if (wmiDevice) {
-          deviceName = wmiDevice.Name;
+          deviceName = `${wmiDevice.Description} ${wmiDevice.Manufacturer} ${wmiDevice.Name}`;
         }
       } else if (process.platform === "linux") {
         deviceName = await getDeviceNameLinux(port.path);
@@ -375,7 +376,7 @@ async function getWmiDeviceInfo(): Promise<any[]> {
       "path",
       "Win32_SerialPort",
       "get",
-      "DeviceID,Name",
+      "DeviceID,Name,Description,PNPDeviceID,Manufacturer",
       "/format:csv",
     ];
     execFile(command, args, (error, stdout, stderr) => {
@@ -393,12 +394,17 @@ async function getWmiDeviceInfo(): Promise<any[]> {
       // Skip the header line
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
-        const [node, deviceId, name] = line.split(",");
+        const columns = line.split(",");
 
-        if (deviceId && name) {
+        // Ensure we have all expected columns
+        if (columns.length >= 5) {
+          const [node, deviceId, name, description, manufacturer] = columns;
+
           devices.push({
             DeviceID: deviceId.trim(),
             Name: name.trim(),
+            Description: description.trim(),
+            Manufacturer: manufacturer.trim(),
           });
         }
       }
