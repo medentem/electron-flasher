@@ -1,4 +1,5 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
+import path from "node:path";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
@@ -19,15 +20,18 @@ const config: ForgeConfig = {
       optionsForFile: (_filePath) => {
         return {
           hardenedRuntime: true,
-          entitlements: "entitlements.plist",
-          entitlementsInherit: "entitlements.plist",
+          entitlements: path.resolve(__dirname, "entitlements.plist"),
+          entitlementsInherit: path.resolve(__dirname, "entitlements.plist"),
           signatureFlags: "library",
           requirements: undefined,
-          deep: true,
-          force: true,
-          verbose: true,
+          strictVerify: false,
           gatekeeperAssess: false,
-          noLegacySigning: true,
+          additionalArguments: [
+            "--deep",
+            "--force",
+            "--verbose",
+            "--no-legacy-signing",
+          ],
         };
       },
     },
