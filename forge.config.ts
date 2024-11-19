@@ -23,7 +23,6 @@ const config: ForgeConfig = {
           hardenedRuntime: true,
           entitlements: path.resolve(__dirname, "entitlements.plist"),
           entitlementsInherit: path.resolve(__dirname, "entitlements.plist"),
-          signatureFlags: "library",
           requirements: undefined,
           strictVerify: false,
           gatekeeperAssess: false,
