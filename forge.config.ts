@@ -26,12 +26,7 @@ const config: ForgeConfig = {
           requirements: undefined,
           strictVerify: false,
           gatekeeperAssess: false,
-          additionalArguments: [
-            "--deep",
-            "--force",
-            "--verbose",
-            "--no-legacy-signing",
-          ],
+          additionalArguments: ["--force", "--verbose", "--no-legacy-signing"],
         };
       },
     },
