@@ -10,31 +10,40 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
+const isCI = process.env.CI === "true";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     ignore: [/\/\.(?!vite)/],
     appBundleId: "com.medentem.meshtastic-updater",
     executableName: "meshtastic-updater",
-    osxSign: {
-      identity: `Developer ID Application: Medentem LLC (${process.env.APPLE_TEAM_ID})`,
-      optionsForFile: (_filePath) => {
-        return {
-          hardenedRuntime: true,
-          entitlements: path.resolve(__dirname, "entitlements.plist"),
-          entitlementsInherit: path.resolve(__dirname, "entitlements.plist"),
-          requirements: undefined,
-          strictVerify: false,
-          gatekeeperAssess: false,
-          additionalArguments: ["--verbose"],
-        };
-      },
-    },
-    osxNotarize: {
-      appleId: process.env.APPLE_ID || "",
-      appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD || "",
-      teamId: process.env.APPLE_TEAM_ID || "",
-    },
+    osxSign: isCI
+      ? {
+          identity: `Developer ID Application: Medentem LLC (${process.env.APPLE_TEAM_ID})`,
+          optionsForFile: (_filePath) => {
+            return {
+              hardenedRuntime: true,
+              entitlements: path.resolve(__dirname, "entitlements.plist"),
+              entitlementsInherit: path.resolve(
+                __dirname,
+                "entitlements.plist",
+              ),
+              requirements: undefined,
+              strictVerify: false,
+              gatekeeperAssess: false,
+              additionalArguments: ["--verbose"],
+            };
+          },
+        }
+      : undefined,
+    osxNotarize: isCI
+      ? {
+          appleId: process.env.APPLE_ID || "",
+          appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD || "",
+          teamId: process.env.APPLE_TEAM_ID || "",
+        }
+      : undefined,
   },
   makers: [
     new MakerSquirrel({}),
