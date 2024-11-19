@@ -3,7 +3,6 @@
 import { ipcMain, WebContentsView } from "electron";
 import { SerialPort as ElectronSerialPort } from "serialport";
 import { execFile } from "node:child_process";
-import wmi from "node-wmi";
 import plist from "plist";
 import type { BrowserWindow } from "electron/main";
 import { Client, type ElectronSerialConnection } from "@meshtastic/js";
@@ -195,11 +194,12 @@ async function getEnrichedPorts() {
         deviceName = await getDeviceNameForMacOS(port.serialNumber);
       } else if (process.platform === "win32") {
         const wmiData = await getWmiDeviceInfo();
+        console.log(wmiData);
         const wmiDevice = wmiData.find(
-          (device) => device.PNPDeviceID === port.pnpId,
+          (device) => device.DeviceID === port.pnpId,
         );
         if (wmiDevice) {
-          deviceName = wmiDevice.Name || wmiDevice.Caption || deviceName;
+          deviceName = wmiDevice.Name;
         }
       } else if (process.platform === "linux") {
         deviceName = await getDeviceNameLinux(port.path);
@@ -370,19 +370,40 @@ function findDeviceNameInIORegData(
 
 async function getWmiDeviceInfo(): Promise<any[]> {
   return new Promise((resolve) => {
-    wmi.Query(
-      {
-        class: "Win32_SerialPort",
-      },
-      (err: any, result: any[]) => {
-        if (err) {
-          console.error("Error querying WMI:", err);
-          resolve([]);
-        } else {
-          resolve(result);
+    const command = "wmic";
+    const args = [
+      "path",
+      "Win32_SerialPort",
+      "get",
+      "DeviceID,Name",
+      "/format:csv",
+    ];
+    execFile(command, args, (error, stdout, stderr) => {
+      if (error) {
+        console.error("WMIC Execution Error:", error);
+        return;
+      }
+
+      const lines = stdout
+        .trim()
+        .split("\n")
+        .filter((line) => line.trim() !== "");
+      const devices = [];
+
+      // Skip the header line
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const [node, deviceId, name] = line.split(",");
+
+        if (deviceId && name) {
+          devices.push({
+            DeviceID: deviceId.trim(),
+            Name: name.trim(),
+          });
         }
-      },
-    );
+      }
+      resolve(devices);
+    });
   });
 }
 
