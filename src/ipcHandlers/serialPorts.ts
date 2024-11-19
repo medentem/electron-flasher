@@ -197,10 +197,12 @@ async function getEnrichedPorts() {
         console.log(wmiData);
         const wmiDevice = wmiData.find(
           (device) =>
-            device.DeviceID === port.pnpId || device.DeviceID === port.path,
+            device.DeviceID &&
+            port.pnpId &&
+            device.DeviceID.toLowerCase().includes(port.pnpId.toLowerCase()),
         );
         if (wmiDevice) {
-          deviceName = `${wmiDevice.Description} ${wmiDevice.Manufacturer} ${wmiDevice.Name}`;
+          deviceName = `${wmiDevice.FriendlyName} ${wmiDevice.Description} ${wmiDevice.Manufacturer}`;
         }
       } else if (process.platform === "linux") {
         deviceName = await getDeviceNameLinux(port.path);
@@ -371,42 +373,33 @@ function findDeviceNameInIORegData(
 
 async function getWmiDeviceInfo(): Promise<any[]> {
   return new Promise((resolve) => {
-    const command = "wmic";
+    const command = "powershell.exe";
     const args = [
-      "path",
-      "Win32_SerialPort",
-      "get",
-      "DeviceID,Name,Description,PNPDeviceID,Manufacturer",
-      "/format:csv",
+      "-NoProfile",
+      "-Command",
+      `
+      Get-CimInstance Win32_PnPEntity -Filter "PNPClass = 'Ports'" | 
+      Select-Object DeviceID, Name, Description, Manufacturer, HardwareID, FriendlyName | 
+      ConvertTo-Json -Depth 3
+      `,
     ];
-    execFile(command, args, (error, stdout, stderr) => {
+
+    execFile(command, args, { shell: true }, (error, stdout, stderr) => {
       if (error) {
-        console.error("WMIC Execution Error:", error);
+        console.error("PowerShell Execution Error:", error);
         return;
       }
 
-      const lines = stdout
-        .trim()
-        .split("\n")
-        .filter((line) => line.trim() !== "");
-      const devices = [];
+      let devices = [];
+      try {
+        devices = JSON.parse(stdout);
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        return;
+      }
 
-      // Skip the header line
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        const columns = line.split(",");
-
-        // Ensure we have all expected columns
-        if (columns.length >= 5) {
-          const [node, deviceId, name, description, manufacturer] = columns;
-
-          devices.push({
-            DeviceID: deviceId.trim(),
-            Name: name.trim(),
-            Description: description.trim(),
-            Manufacturer: manufacturer.trim(),
-          });
-        }
+      if (!Array.isArray(devices)) {
+        devices = [devices];
       }
       resolve(devices);
     });
