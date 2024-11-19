@@ -17,7 +17,7 @@ const config: ForgeConfig = {
     appBundleId: "com.medentem.meshtastic-updater",
     executableName: "meshtastic-updater",
     osxSign: {
-      identity: "Developer ID Application: Medentem LLC (A68V7LS529)",
+      identity: `Developer ID Application: Medentem LLC (${process.env.APPLE_TEAM_ID})`,
       optionsForFile: (_filePath) => {
         return {
           hardenedRuntime: true,
@@ -33,7 +33,7 @@ const config: ForgeConfig = {
     osxNotarize: {
       appleId: process.env.APPLE_ID || "",
       appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD || "",
-      teamId: process.env.APPLE_TEAM_ID || "A68V7LS529",
+      teamId: process.env.APPLE_TEAM_ID || "",
     },
   },
   makers: [
