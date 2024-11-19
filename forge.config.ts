@@ -15,6 +15,7 @@ const config: ForgeConfig = {
     asar: true,
     ignore: [/\/\.(?!vite)/],
     appBundleId: "com.medentem.meshtastic-updater",
+    executableName: "meshtastic-updater",
     osxSign: {
       identity: "Developer ID Application: Medentem LLC (A68V7LS529)",
       optionsForFile: (_filePath) => {
