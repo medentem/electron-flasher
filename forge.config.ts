@@ -45,7 +45,7 @@ const config: ForgeConfig = {
   ],
   rebuildConfig: {
     force: true,
-    onlyModules: ["serialport", "drivelist", "platformio-node-helpers"],
+    onlyModules: ["serialport", "drivelist"],
   },
   plugins: [
     new AutoUnpackNativesPlugin({}),

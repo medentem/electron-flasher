@@ -68,7 +68,6 @@
     "electron-squirrel-startup": "^1.0.1",
     "esptool-js": "^0.4.7",
     "node-wmi": "^0.0.5",
-    "platformio-node-helpers": "^11.2.0",
     "plist": "^3.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
