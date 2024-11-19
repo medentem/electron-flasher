@@ -41,11 +41,15 @@ jobs:
           security import signing_certificate.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
 
-      - name: Build Electron App
+      - name: Set Environment Variables
+        if: matrix.os == 'macos-latest'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID || '' }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID || '' }}
+        run: echo $APPLE_ID
+
+      - name: Build Electron App
         run: npx electron-forge make
 
       - name: Upload Artifacts
