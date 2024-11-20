@@ -193,6 +193,7 @@ async function getEnrichedPorts() {
         console.info("OSX detected - getting additional information.");
         deviceName = await getDeviceNameForMacOS(port.serialNumber);
       } else if (process.platform === "win32") {
+        console.log("Getting additinal device data from WMI");
         const wmiData = await getWmiDeviceInfo();
         console.log(wmiData);
         const wmiDevice = wmiData.find(
@@ -396,6 +397,8 @@ async function getWmiDeviceInfo(): Promise<WMICDevice[]> {
           .split("\n")
           .filter((line) => line.trim() !== "");
         const devices = [];
+
+        console.log(lines);
 
         // Skip the header line
         for (let i = 1; i < lines.length; i++) {
