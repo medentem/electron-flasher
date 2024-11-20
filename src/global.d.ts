@@ -59,7 +59,7 @@ declare global {
     Name: string;
     Description: string;
     Manufacturer: string;
-    HardwareID: string;
+    FriendlyName: string;
   }
 
   interface FileInfo {

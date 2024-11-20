@@ -374,57 +374,31 @@ function findDeviceNameInIORegData(
 
 async function getWmiDeviceInfo(): Promise<WMICDevice[]> {
   return new Promise((resolve) => {
-    const command = "wmic";
+    const command = "powershell.exe";
     const args = [
-      "path",
-      "Win32_PnPEntity",
-      "where",
-      "\"ConfigManagerErrorCode = 0 AND PNPClass = 'Ports'\"",
-      "get",
-      "DeviceID,Name,Description,Manufacturer,HardwareID",
-      "/format:csv",
+      "-NoProfile",
+      "-Command",
+      `
+  Get-CimInstance Win32_PnPEntity -Filter "PNPClass = 'Ports'" | 
+  Select-Object DeviceID, Name, Description, Manufacturer, HardwareID, FriendlyName | 
+  ConvertTo-Json -Depth 3
+  `,
     ];
 
     try {
       execFile(command, args, { shell: true }, (error, stdout, stderr) => {
         if (error) {
-          console.error("WMIC Execution Error:", error);
+          console.error("PS Execution Error:", error);
           return;
         }
 
-        const lines = stdout
-          .trim()
-          .split("\n")
-          .filter((line) => line.trim() !== "");
-        const devices = [];
-
-        console.log(lines);
-
-        // Skip the header line
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i];
-          const columns = line.split(",");
-
-          // Ensure we have all expected columns
-          if (columns.length >= 5) {
-            const [
-              node,
-              deviceId,
-              name,
-              description,
-              manufacturer,
-              hardwareId,
-            ] = columns;
-
-            devices.push({
-              DeviceID: deviceId.trim(),
-              Name: name.trim(),
-              Description: description.trim(),
-              Manufacturer: manufacturer.trim(),
-              HardwareID: hardwareId.trim(),
-            });
-          }
+        let devices = JSON.parse(stdout);
+        if (!Array.isArray(devices)) {
+          devices = [devices];
         }
+
+        console.log(devices);
+
         resolve(devices);
       });
     } catch {
