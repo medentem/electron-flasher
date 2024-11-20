@@ -54,6 +54,14 @@ declare global {
     deviceName?: string;
   }
 
+  interface WMICDevice {
+    DeviceID: string;
+    Name: string;
+    Description: string;
+    Manufacturer: string;
+    HardwareID: string;
+  }
+
   interface FileInfo {
     fullPath: string;
     fileName: string;

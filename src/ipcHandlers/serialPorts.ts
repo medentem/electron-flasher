@@ -202,7 +202,7 @@ async function getEnrichedPorts() {
             device.DeviceID.toLowerCase().includes(port.pnpId.toLowerCase()),
         );
         if (wmiDevice) {
-          deviceName = `${wmiDevice.FriendlyName} ${wmiDevice.Description} ${wmiDevice.Manufacturer}`;
+          deviceName = `${wmiDevice.Name} ${wmiDevice.Description} ${wmiDevice.Manufacturer}`;
         }
       } else if (process.platform === "linux") {
         deviceName = await getDeviceNameLinux(port.path);
@@ -371,37 +371,50 @@ function findDeviceNameInIORegData(
   return undefined;
 }
 
-async function getWmiDeviceInfo(): Promise<any[]> {
+async function getWmiDeviceInfo(): Promise<WMICDevice[]> {
   return new Promise((resolve) => {
-    const command = "powershell.exe";
+    const command = "wmic";
     const args = [
-      "-NoProfile",
-      "-Command",
-      `
-      Get-CimInstance Win32_PnPEntity -Filter "PNPClass = 'Ports'" | 
-      Select-Object DeviceID, Name, Description, Manufacturer, HardwareID, FriendlyName | 
-      ConvertTo-Json -Depth 3
-      `,
+      "path",
+      "Win32_PnPEntity",
+      "where",
+      "\"ConfigManagerErrorCode = 0 AND PNPClass = 'Ports'\"",
+      "get",
+      "DeviceID,Name,Description,Manufacturer,HardwareID",
+      "/format:csv",
     ];
 
-    execFile(command, args, { shell: true }, (error, stdout, stderr) => {
+    execFile(command, args, (error, stdout, stderr) => {
       if (error) {
-        console.error("PowerShell Execution Error:", error);
+        console.error("WMIC Execution Error:", error);
         return;
       }
 
-      let devices = [];
-      try {
-        devices = JSON.parse(stdout);
-      } catch (parseError) {
-        console.error("JSON Parse Error:", parseError);
-        return;
-      }
+      const lines = stdout
+        .trim()
+        .split("\n")
+        .filter((line) => line.trim() !== "");
+      const devices = [];
 
-      if (!Array.isArray(devices)) {
-        devices = [devices];
+      // Skip the header line
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const columns = line.split(",");
+
+        // Ensure we have all expected columns
+        if (columns.length >= 5) {
+          const [node, deviceId, name, description, manufacturer, hardwareId] =
+            columns;
+
+          devices.push({
+            DeviceID: deviceId.trim(),
+            Name: name.trim(),
+            Description: description.trim(),
+            Manufacturer: manufacturer.trim(),
+            HardwareID: hardwareId.trim(),
+          });
+        }
       }
-      resolve(devices);
     });
   });
 }
