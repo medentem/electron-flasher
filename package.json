@@ -1,7 +1,7 @@
 {
   "name": "meshtastic-updater",
   "productName": "Meshtastic Updater",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Meshtastic Updater",
   "main": ".vite/main.js",
   "scripts": {
