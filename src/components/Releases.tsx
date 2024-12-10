@@ -1,6 +1,9 @@
 import { useFirmwareStore } from "../stores/firmwareStore";
 import MeshtasticIcon from "./MeshtasticIcon";
-import { FolderPlusIcon } from "@heroicons/react/24/solid";
+import {
+  FolderPlusIcon,
+  AdjustmentsVerticalIcon,
+} from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import ToolTip from "./ToolTip";
 
@@ -8,7 +11,12 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Releases() {
+export interface ReleasesProps {
+  onCustomizeFirmware: () => void;
+}
+
+export default function Releases(props: ReleasesProps) {
+  const { onCustomizeFirmware } = props;
   const stableFirmwareReleases = useFirmwareStore((state) => state.stable);
   const alphaFirmwareReleases = useFirmwareStore((state) => state.alpha);
   const previewFirmwareReleases = useFirmwareStore((state) => state.previews);
@@ -137,10 +145,16 @@ export default function Releases() {
             </h3>
           </div>
           <div className="min-w-0 flex 1">
-            <ToolTip tooltip="Custom Firmware?">
+            <ToolTip tooltip="Custom Firmware">
               <FolderPlusIcon
-                className="text-gray-500 size-6 cursor-pointer"
+                className="text-gray-500 size-6 cursor-pointer mr-2"
                 onClick={openFilePicker}
+              />
+            </ToolTip>
+            <ToolTip tooltip="Customize Settings">
+              <AdjustmentsVerticalIcon
+                className="text-gray-500 size-6 cursor-pointer"
+                onClick={onCustomizeFirmware}
               />
             </ToolTip>
           </div>

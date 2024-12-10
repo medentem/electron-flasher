@@ -1,8 +1,9 @@
 import { app, BrowserWindow } from "electron";
+import path from "node:path";
 import { registerSerialPortHandlers } from "./ipcHandlers/serialPorts";
 import { registerApiHandlers } from "./ipcHandlers/api";
-import path from "node:path";
 import { registerFileSystemHandlers } from "./ipcHandlers/fileSystem";
+import { registerPlatformIOHandlers } from "./ipcHandlers/platformio";
 
 const isDev = !app.isPackaged;
 
@@ -58,6 +59,7 @@ app.on("ready", () => {
   createWindow();
   registerFileSystemHandlers(mainWindow);
   registerSerialPortHandlers(mainWindow);
+  registerPlatformIOHandlers(mainWindow);
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

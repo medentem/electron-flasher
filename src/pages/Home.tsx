@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useDeviceStore } from "../stores/deviceStore";
 import SuccessDialog from "../components/SuccessDialog";
 import WelcomeDialog from "../components/WelcomeDialog";
+import CustomizeFirmwareDialog from "../components/CustomizeFirmwareDialog";
 
 const Home: React.FC = () => {
   const selectedFirmware = useFirmwareStore((state) => state.selectedFirmware);
@@ -19,6 +20,8 @@ const Home: React.FC = () => {
   );
   const [openReleaseNotes, setOpenReleaseNotes] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [openCustomizeFirmwareDialog, setOpenCustomizeFirwareDialog] =
+    useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
@@ -57,6 +60,15 @@ const Home: React.FC = () => {
     fetchPorts();
   };
 
+  const onCustomizeFirmware = () => {
+    console.log("Customize firmware clicked");
+    setOpenCustomizeFirwareDialog(true);
+  };
+
+  const customizeFirwareDialogDismissed = () => {
+    setOpenCustomizeFirwareDialog(false);
+  };
+
   useEffect(() => {
     if (finishedUpdate) {
       setOpenSuccessDialog(true);
@@ -73,7 +85,7 @@ const Home: React.FC = () => {
         </div>
         <div className="flex p-px lg:col-span-2">
           <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 lg:rounded-tr-[2rem] lg:rounded-br-[2rem] w-full p-6">
-            <Releases />
+            <Releases onCustomizeFirmware={onCustomizeFirmware} />
           </div>
         </div>
       </div>
@@ -89,6 +101,10 @@ const Home: React.FC = () => {
         onClose={successDialogDismissed}
       />
       <WelcomeDialog open={showWelcomeModal} onClose={welcomeDialogDismissed} />
+      <CustomizeFirmwareDialog
+        open={openCustomizeFirmwareDialog}
+        onClose={customizeFirwareDialogDismissed}
+      />
     </>
   );
 };
