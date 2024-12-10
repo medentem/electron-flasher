@@ -33,9 +33,13 @@ export default function CustomizeFirmwareDialog(
     setCheckingDependencies(true);
     setDialogTitle("Checking Software...");
     window.electronAPI.checkPython().then((pythonInstalled) => {
-      console.log("checking for python");
       setPythonInstalled(pythonInstalled);
-      setPythonSubText("Python found.");
+      setPythonSubText(
+        `Python ${pythonInstalled ? "found." : "not found. Installing..."}`,
+      );
+      if (!pythonInstalled) {
+        // INSTALL PYTHON HERE
+      }
     });
   };
 
