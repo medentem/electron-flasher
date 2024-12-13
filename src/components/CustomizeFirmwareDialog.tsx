@@ -8,7 +8,6 @@ import {
   ExclamationCircleIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
-import MeshtasticIcon from "./MeshtasticIcon";
 import { useEffect, useState } from "react";
 
 export interface CustomizeFirmwareDialogProps {
