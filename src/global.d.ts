@@ -44,6 +44,7 @@ declare global {
     checkPython: () => Promise<boolean>;
     checkPlatformIO: () => Promise<boolean>;
     installPython: () => Promise<boolean>;
+    installPlatformIO: () => Promise<boolean>;
   }
 
   interface SerialPortInfo {

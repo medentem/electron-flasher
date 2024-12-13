@@ -3,5 +3,6 @@ export function preloadPlatformIO(ipcRenderer: Electron.IpcRenderer) {
     checkPython: () => ipcRenderer.invoke("check-python"),
     checkPlatformIO: () => ipcRenderer.invoke("check-platformio"),
     installPython: () => ipcRenderer.invoke("install-python"),
+    installPlatformIO: () => ipcRenderer.invoke("install-platformio"),
   };
 }

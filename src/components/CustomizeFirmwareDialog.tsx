@@ -51,16 +51,20 @@ export default function CustomizeFirmwareDialog(
           );
         });
       }
-    });
-
-    window.electronAPI.checkPlatformIO().then((platformIOInstalled) => {
-      setPlatformIOInstalled(platformIOInstalled);
-      setPlatformIOSubText(
-        `Platform IO ${platformIOInstalled ? "found." : "not found. Installing..."}`,
-      );
-      if (!platformIOInstalled) {
-        // TODO: install platform IO
-      }
+      window.electronAPI.checkPlatformIO().then((platformIOInstalled) => {
+        setPlatformIOInstalled(platformIOInstalled);
+        setPlatformIOSubText(
+          `Platform IO ${platformIOInstalled ? "found." : "not found. Installing..."}`,
+        );
+        if (!platformIOInstalled) {
+          window.electronAPI.installPlatformIO().then((installed) => {
+            setPlatformIOInstalled(installed);
+            setPythonSubText(
+              `Platform IO ${installed ? "installed." : "not installed."}`,
+            );
+          });
+        }
+      });
     });
   };
 

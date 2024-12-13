@@ -29,6 +29,31 @@ export function registerPlatformIOHandlers(mainWindow: BrowserWindow) {
     }
     return await installPythonOnLinux();
   });
+
+  ipcMain.handle("install-platformio", async (_event) => {
+    const foundPIO = await installPlatformIO(_pythonCommand);
+    return foundPIO;
+  });
+}
+
+async function installPlatformIO(pythonCommand = "python") {
+  return new Promise((resolve, reject) => {
+    // Attempt to install using pip. We use `-m pip install platformio` to ensure
+    // we run pip associated with the given Python.
+    execFile(
+      pythonCommand,
+      ["-m", "pip", "install", "platformio"],
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error("Failed to install platformio:", stderr);
+          reject(error);
+        } else {
+          console.log("PlatformIO installed successfully:", stdout);
+          resolve(true);
+        }
+      },
+    );
+  });
 }
 
 async function checkPythonCommand(command = "python") {
