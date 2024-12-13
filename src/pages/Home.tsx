@@ -9,6 +9,7 @@ import { useDeviceStore } from "../stores/deviceStore";
 import SuccessDialog from "../components/SuccessDialog";
 import WelcomeDialog from "../components/WelcomeDialog";
 import CustomizeFirmwareDialog from "../components/CustomizeFirmwareDialog";
+import RequiresActionToContinueDialog from "../components/RequiresActionToContinueDialog";
 
 const Home: React.FC = () => {
   const selectedFirmware = useFirmwareStore((state) => state.selectedFirmware);
@@ -20,6 +21,8 @@ const Home: React.FC = () => {
   );
   const [openReleaseNotes, setOpenReleaseNotes] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
+  const [openContinueActionDialog, setOpenContinueActionDialog] =
+    useState(false);
   const [openCustomizeFirmwareDialog, setOpenCustomizeFirwareDialog] =
     useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -36,7 +39,7 @@ const Home: React.FC = () => {
 
   const onUpdateClick = () => {
     if (hasCustomFirmware()) {
-      updateDevice();
+      handleUpdate();
       return;
     }
     setOpenReleaseNotes(true);
@@ -44,8 +47,18 @@ const Home: React.FC = () => {
 
   const onContinue = () => {
     setOpenReleaseNotes(false);
+    handleUpdate();
+  };
+
+  const handleUpdate = async () => {
     updateDevice();
   };
+
+  const onContinueUpdateAction = () => {
+    // updateDevice(true);
+    setOpenContinueActionDialog(false);
+  };
+
   const onCancel = () => {
     setOpenReleaseNotes(false);
   };
@@ -104,6 +117,14 @@ const Home: React.FC = () => {
       <CustomizeFirmwareDialog
         open={openCustomizeFirmwareDialog}
         onClose={customizeFirwareDialogDismissed}
+      />
+      <RequiresActionToContinueDialog
+        open={openContinueActionDialog}
+        onClose={onContinueUpdateAction}
+        title={"Reboot Your Device"}
+        body={
+          "Your device was wiped clean and needs to be rebooted to continue the update. Please power off your device, power it back on, and ensure its plugged in. Click 'Continue' once your device is powered back on and connected."
+        }
       />
     </>
   );

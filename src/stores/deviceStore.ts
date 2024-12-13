@@ -163,7 +163,6 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   updateDevice: async () => {
     set({ isUpdating: true, progressMessage: "Checking device type." });
 
-    // TODO: check for nrf vs ESP32
     if (get().isUF2()) {
       console.info("UF2 device detected.");
       await get().startUF2Update();
@@ -247,7 +246,14 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
       set({
         progressMessage: "Device wiped. Waiting for device to restart (10s)...",
       });
-      await sleep(10000);
+      await sleep(8000);
+
+      const portsList = await window.electronAPI.getSerialPorts();
+      await window.electronAPI.connectToDevice(
+        portsList[portsList.length - 1].path,
+      );
+
+      await sleep(2000);
     }
 
     // Check for custom firmware
@@ -309,7 +315,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
 
     // Only get drives that weren't there before we placed the mesh device in DFU mode
     // There SHOULD only be one here...
-    const meshDevice = driveListAfter.find((x) => {
+    let meshDevice = driveListAfter.find((x) => {
       return (
         driveListBefore.find((y) => x.devicePath === y.devicePath) === undefined
       );
@@ -317,7 +323,7 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
 
     // TODO: Error state
     if (!meshDevice) {
-      return;
+      meshDevice = driveListAfter[0];
     }
     console.info(`DFU Device Detected: ${JSON.stringify(meshDevice)}`);
 
