@@ -22,6 +22,9 @@ export default function Steps(props: StepsProps) {
               {step.status === "complete" ? (
                 <span
                   onClick={step.onClick}
+                  onKeyUp={(e) => {
+                    if (e.key === "Enter") step.onClick?.();
+                  }}
                   className="group flex w-full items-center"
                 >
                   <span className="flex items-center px-6 py-4 text-sm font-medium">
@@ -39,6 +42,9 @@ export default function Steps(props: StepsProps) {
               ) : step.status === "current" ? (
                 <span
                   onClick={step.onClick}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") step.onClick?.();
+                  }}
                   aria-current="step"
                   className="flex items-center px-6 py-4 text-sm font-medium"
                 >
@@ -70,6 +76,9 @@ export default function Steps(props: StepsProps) {
               ) : (
                 <span
                   onClick={step.onClick}
+                  onKeyUp={(e) => {
+                    if (e.key === "Enter") step.onClick?.();
+                  }}
                   className="group flex items-center"
                 >
                   <span className="flex items-center px-6 py-4 text-sm font-medium">

@@ -42,6 +42,8 @@ declare global {
     getAssetPath: (...paths: string[]) => Promise<string>;
     getImageData: (...paths: string[]) => Promise<string>;
     checkPython: () => Promise<boolean>;
+    checkPlatformIO: () => Promise<boolean>;
+    installPython: () => Promise<boolean>;
   }
 
   interface SerialPortInfo {
