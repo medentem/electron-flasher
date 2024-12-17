@@ -18,6 +18,7 @@ declare global {
     enterDfuMode: () => Promise<void>;
     getDrives: (requestId: string) => Promise<Drive[]>;
     downloadFirmware: (fileUrl: string) => Promise<FileInfo>;
+    getUserprefsFile: (fullPath: string) => Promise<string>;
     copyFirmware: (
       fileName: string,
       fromPath: string,

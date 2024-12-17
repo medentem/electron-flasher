@@ -5,6 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import axios from "axios";
 import { getAssetPath } from "../utils/assets";
+import AdmZip from "adm-zip";
 
 let _mainWindow: BrowserWindow | undefined;
 
@@ -16,6 +17,51 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     const removableDrives = drives.filter((drive) => drive.isRemovable);
     return removableDrives;
   });
+
+  ipcMain.handle(
+    "get-userprefs-file",
+    async (_event: any, fullPath: string) => {
+      try {
+        // 1. Determine the directory of the zip file
+        const dirName = path.dirname(fullPath);
+
+        // 2. Create a folder name based on the zip file name (without extension)
+        const baseName = path.basename(fullPath, path.extname(fullPath));
+        const extractDir = path.join(dirName, baseName);
+
+        // Ensure the output directory doesn't exist or create it
+        if (!fs.existsSync(extractDir)) {
+          fs.mkdirSync(extractDir, { recursive: true });
+        }
+
+        // 3. Extract the contents of the zip file into the new folder
+        const zip = new AdmZip(fullPath);
+        zip.extractAllTo(extractDir, true);
+
+        // 4. After extraction, read userPrefs.jsonc
+        const userPrefsPath = path.join(
+          extractDir,
+          baseName.replace("v", "firmware-"),
+          "userPrefs.jsonc",
+        );
+
+        // Check if the file exists
+        if (!fs.existsSync(userPrefsPath)) {
+          return {
+            success: false,
+            error: "userPrefs.jsonc not found in extracted directory.",
+          };
+        }
+
+        // Read the file contents
+        const userPrefsContent = fs.readFileSync(userPrefsPath, "utf-8");
+
+        return { success: true, folderPath: extractDir, userPrefsContent };
+      } catch (error: any) {
+        return { success: false, error: error.message };
+      }
+    },
+  );
 
   ipcMain.handle("download-firmware", async (_event: any, fileUrl: string) => {
     // Create a temporary file path

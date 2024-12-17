@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 export interface CustomizeFirmwareDialogProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (isContinue: boolean) => void;
 }
 
 export default function CustomizeFirmwareDialog(
@@ -45,7 +45,7 @@ export default function CustomizeFirmwareDialog(
 
   const checkSoftware = () => {
     if (allDepsInstalled) {
-      //lclOnClose();
+      lclOnClose(true);
       return;
     }
     setIsLoading(true);
@@ -82,17 +82,21 @@ export default function CustomizeFirmwareDialog(
     });
   };
 
-  const lclOnClose = () => {
+  const lclOnClose = (isContinue: boolean) => {
     setIsLoading(false);
     setCheckingDependencies(false);
     setPythonInstalled(undefined);
     setPythonSubText("Checking for python...");
     setDialogTitle("Additional Software Required");
-    onClose();
+    onClose(isContinue);
   };
 
   return (
-    <Dialog open={open} onClose={lclOnClose} className="relative z-10">
+    <Dialog
+      open={open}
+      onClose={() => lclOnClose(false)}
+      className="relative z-10"
+    >
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
@@ -252,7 +256,7 @@ export default function CustomizeFirmwareDialog(
             <div className="mt-5 sm:mt-6 flex">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => lclOnClose(false)}
                 className="mr-4 inline-flex w-full justify-center rounded-md bg-gray-500 px-3 py-2 text-sm font-semibold text-white shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 Cancel

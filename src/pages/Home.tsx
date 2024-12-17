@@ -8,8 +8,9 @@ import { useEffect, useState } from "react";
 import { useDeviceStore } from "../stores/deviceStore";
 import SuccessDialog from "../components/SuccessDialog";
 import WelcomeDialog from "../components/WelcomeDialog";
-import CustomizeFirmwareDialog from "../components/CustomizeFirmwareDialog";
+import CustomizeFirmwareDependenciesDialog from "../components/CustomizeFirmwareDependenciesDialog";
 import RequiresActionToContinueDialog from "../components/RequiresActionToContinueDialog";
+import CustomizeFirmware from "../components/CustomizeFirmware";
 
 const Home: React.FC = () => {
   const selectedFirmware = useFirmwareStore((state) => state.selectedFirmware);
@@ -19,12 +20,16 @@ const Home: React.FC = () => {
   const hasCustomFirmware = useFirmwareStore(
     (state) => state.hasCustomFirmware,
   );
+  const [customizeFirmwareDepsInstalled, setCustomizeFirmwareDepsInstalled] =
+    useState(false);
   const [openReleaseNotes, setOpenReleaseNotes] = useState(false);
   const [openSuccessDialog, setOpenSuccessDialog] = useState(false);
   const [openContinueActionDialog, setOpenContinueActionDialog] =
     useState(false);
-  const [openCustomizeFirmwareDialog, setOpenCustomizeFirwareDialog] =
-    useState(false);
+  const [
+    openCustomizeFirmwareDependenciesDialog,
+    setOpenCustomizeFirwareDependenciesDialog,
+  ] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
@@ -75,11 +80,14 @@ const Home: React.FC = () => {
 
   const onCustomizeFirmware = () => {
     console.log("Customize firmware clicked");
-    setOpenCustomizeFirwareDialog(true);
+    setOpenCustomizeFirwareDependenciesDialog(true);
   };
 
-  const customizeFirwareDialogDismissed = () => {
-    setOpenCustomizeFirwareDialog(false);
+  const customizeFirwareDependenciesDialogDismissed = (
+    wasContinue: boolean,
+  ) => {
+    setOpenCustomizeFirwareDependenciesDialog(false);
+    setCustomizeFirmwareDepsInstalled(wasContinue);
   };
 
   useEffect(() => {
@@ -90,17 +98,28 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-6 px-12">
-        <div className="flex p-px lg:col-span-4">
-          <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 max-lg:rounded-t-[2rem] lg:rounded-tl-[2rem] lg:rounded-bl-[2rem] w-full p-6">
+      <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-6 px-12">
+        <div
+          className={`flex p-px ${customizeFirmwareDepsInstalled ? "md:col-span-2" : "md:col-span-4"}`}
+        >
+          <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 max-md:rounded-t-[2rem] md:rounded-tl-[2rem] md:rounded-bl-[2rem] w-full p-6">
             <DeviceCard onUpdateClick={onUpdateClick} />
           </div>
         </div>
-        <div className="flex p-px lg:col-span-2">
-          <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 lg:rounded-tr-[2rem] lg:rounded-br-[2rem] w-full p-6">
+        <div className="flex p-px md:col-span-2">
+          <div
+            className={`overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 ${!customizeFirmwareDepsInstalled ? "md:rounded-tr-[2rem] md:rounded-br-[2rem]" : ""} w-full p-6`}
+          >
             <Releases onCustomizeFirmware={onCustomizeFirmware} />
           </div>
         </div>
+        {customizeFirmwareDepsInstalled && (
+          <div className="flex p-px md:col-span-2">
+            <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 md:rounded-tr-[2rem] md:rounded-br-[2rem] w-full p-6">
+              <CustomizeFirmware placeholder={() => {}} />
+            </div>
+          </div>
+        )}
       </div>
       <ReleaseNotes
         releaseNotes={selectedFirmware?.release_notes || "No release notes."}
@@ -114,9 +133,9 @@ const Home: React.FC = () => {
         onClose={successDialogDismissed}
       />
       <WelcomeDialog open={showWelcomeModal} onClose={welcomeDialogDismissed} />
-      <CustomizeFirmwareDialog
-        open={openCustomizeFirmwareDialog}
-        onClose={customizeFirwareDialogDismissed}
+      <CustomizeFirmwareDependenciesDialog
+        open={openCustomizeFirmwareDependenciesDialog}
+        onClose={customizeFirwareDependenciesDialogDismissed}
       />
       <RequiresActionToContinueDialog
         open={openContinueActionDialog}

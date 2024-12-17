@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { createUrl } from "../utils/api";
-import { getCorsFriendyReleaseUrl } from "../types/api";
+import {
+  getCorsFriendyReleaseUrl,
+  getFirmwareZipDownloadUrl,
+} from "../types/api";
 
 interface FirmwareState {
   stable: FirmwareResource[];
@@ -11,12 +14,15 @@ interface FirmwareState {
   selectedFirmware: FirmwareResource | undefined;
   customFirmwarePath: string | undefined;
   customFirmwareFileName: string | undefined;
+  isCompiling: boolean;
+  isLoadingFirmwareCustomizationOptions: boolean;
   setSelectedFirmware: (selectedFirmwareId: string) => void;
   setCustomFirmware: (customFirmware: string) => Promise<void>;
   setFirmwareRollup: (firmwareRollup: FirmwareResource[]) => void;
   getFirmwareReleases: () => Promise<void>;
   getFirmwareDownloadUrl: (fileName: string) => string;
   hasCustomFirmware: () => boolean;
+  getFirmwareCustomizationOptions: () => void;
 }
 
 export const useFirmwareStore = create<FirmwareState>((set, get) => ({
@@ -28,6 +34,8 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   selectedFirmware: undefined,
   customFirmwarePath: undefined,
   customFirmwareFileName: undefined,
+  isCompiling: false,
+  isLoadingFirmwareCustomizationOptions: false,
   hasCustomFirmware: () => {
     return get().customFirmwareFileName !== undefined;
   },
@@ -77,5 +85,19 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const selectedFirmware = get().selectedFirmware;
     const firmwareDownloadUrl = `${getCorsFriendyReleaseUrl(selectedFirmware.zip_url)}/${fileName}`;
     return firmwareDownloadUrl;
+  },
+  getFirmwareCustomizationOptions: async () => {
+    const selectedFirmware = get().selectedFirmware;
+    const firmwareDownloadUrl = getFirmwareZipDownloadUrl(
+      selectedFirmware.zip_url,
+    );
+    const fileInfo =
+      await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+    const userPrefsFileContent = await window.electronAPI.getUserprefsFile(
+      fileInfo.fullPath,
+    );
+    console.log(userPrefsFileContent);
+    //fileName = fileInfo.fileName;
+    //finalCopyFromPath = fileInfo.fullPath;
   },
 }));

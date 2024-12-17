@@ -188,9 +188,9 @@ export default function DeviceCard(props: DeviceCardProps) {
               </ToolTip>
             </div>
           </div>
-          <div className={`sm:flex ${!connectedTarget ? "animate-pulse" : ""}`}>
-            <div className="mb-4 flex-shrink-0 sm:mb-0 sm:mr-4">
-              <div className="flex items-center justify-center w-full h-32 bg-gray-300 rounded sm:w-32 dark:bg-gray-700 overflow-hidden">
+          <div className={`${!connectedTarget ? "animate-pulse" : ""}`}>
+            <div className="mb-4 flex-shrink-0">
+              <div className="flex items-center justify-center w-full h-32 bg-gray-300 rounded dark:bg-gray-700 overflow-hidden">
                 {deviceImage && (
                   <img
                     className="object-fill"
@@ -226,7 +226,7 @@ export default function DeviceCard(props: DeviceCardProps) {
             )}
             {connectedTarget && selectedPort && connectedDevice && (
               <div className="w-full">
-                <div className="px-4 sm:px-0">
+                <div className="px-4">
                   <h3 className="text-base font-semibold leading-7 text-gray-900">
                     Device Information
                   </h3>
@@ -236,51 +236,51 @@ export default function DeviceCard(props: DeviceCardProps) {
                 </div>
                 <div className="mt-6 border-t border-gray-100">
                   <dl className="divide-y divide-gray-100">
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Device Type
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {connectedTarget.displayName}
                       </dd>
                     </div>
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Device Name
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {selectedPort.deviceName}
                       </dd>
                     </div>
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Device Serial
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {`${"*".repeat(selectedPort.serialNumber.length - 4)}${selectedPort.serialNumber.slice(selectedPort.serialNumber.length - 4)}`}
                       </dd>
                     </div>
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Manufacturer
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {selectedPort.manufacturer}
                       </dd>
                     </div>
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Has Bluetooth?
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {connectedDevice.hasBluetooth ? "Yes" : "No"}
                       </dd>
                     </div>
-                    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                      <dt className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="px-4 py-1">
+                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Has WiFi?
                       </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+                      <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {connectedDevice.hasWifi ? "Yes" : "No"}
                       </dd>
                     </div>
