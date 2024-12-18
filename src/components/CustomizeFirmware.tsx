@@ -1,11 +1,6 @@
 import { useFirmwareStore } from "../stores/firmwareStore";
-import MeshtasticIcon from "./MeshtasticIcon";
-import {
-  FolderPlusIcon,
-  AdjustmentsVerticalIcon,
-} from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
-import ToolTip from "./ToolTip";
+import { useEffect } from "react";
+import { Switch } from "@headlessui/react";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -83,13 +78,33 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
                         {option.prettyName}
                       </label>
                       <div className="mt-2">
-                        <input
-                          type="text"
-                          name={option.name}
-                          id={option.name}
-                          autoComplete={option.name}
-                          className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        />
+                        {option.type === "boolean" && (
+                          <Switch className="group relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2">
+                            <span className="sr-only">Use setting</span>
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute size-full rounded-md bg-white"
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute mx-auto h-4 w-9 rounded-full bg-gray-200 transition-colors duration-200 ease-in-out group-data-[checked]:bg-indigo-600"
+                            />
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute left-0 inline-block size-5 transform rounded-full border border-gray-200 bg-white shadow ring-0 transition-transform duration-200 ease-in-out group-data-[checked]:translate-x-5"
+                            />
+                          </Switch>
+                        )}
+
+                        {option.type !== "boolean" && (
+                          <input
+                            type="text"
+                            name={option.name}
+                            id={option.name}
+                            autoComplete={option.name}
+                            className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
