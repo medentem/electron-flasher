@@ -2,16 +2,12 @@ import { useFirmwareStore } from "../stores/firmwareStore";
 import { useEffect } from "react";
 import { Switch } from "@headlessui/react";
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
 export interface CustomizeFirmwareProps {
-  placeholder: (value: string) => void;
+  cancelCustomization: () => void;
 }
 
 export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
-  const { placeholder } = props;
+  const { cancelCustomization } = props;
 
   const getFirmwareCustomizationOptions = useFirmwareStore(
     (state) => state.getFirmwareCustomizationOptions,
@@ -114,6 +110,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
             <div className="mt-6 flex items-center justify-end gap-x-6">
               <button
                 type="button"
+                onClick={cancelCustomization}
                 className="text-sm/6 font-semibold text-gray-900"
               >
                 Cancel

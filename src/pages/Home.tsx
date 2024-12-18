@@ -89,6 +89,10 @@ const Home: React.FC = () => {
     setCustomizeFirmwareDepsInstalled(wasContinue);
   };
 
+  const onCancelCustomization = () => {
+    setCustomizeFirmwareDepsInstalled(false);
+  };
+
   useEffect(() => {
     if (finishedUpdate) {
       setOpenSuccessDialog(true);
@@ -115,7 +119,7 @@ const Home: React.FC = () => {
         {customizeFirmwareDepsInstalled && (
           <div className="flex p-px md:col-span-2">
             <div className="overflow-hidden rounded-lg  bg-gray-50 ring-1 ring-white/15 md:rounded-tr-[2rem] md:rounded-br-[2rem] w-full p-6">
-              <CustomizeFirmware placeholder={() => {}} />
+              <CustomizeFirmware cancelCustomization={onCancelCustomization} />
             </div>
           </div>
         )}
