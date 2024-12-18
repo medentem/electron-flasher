@@ -48,6 +48,11 @@ declare global {
     checkPlatformIO: () => Promise<boolean>;
     installPython: () => Promise<boolean>;
     installPlatformIO: () => Promise<boolean>;
+    compileFirmware: (
+      deviceString: string,
+      zipPath: string,
+      optionsJsonString: string,
+    ) => Promise<boolean>;
   }
 
   interface SerialPortInfo {

@@ -4,5 +4,16 @@ export function preloadPlatformIO(ipcRenderer: Electron.IpcRenderer) {
     checkPlatformIO: () => ipcRenderer.invoke("check-platformio"),
     installPython: () => ipcRenderer.invoke("install-python"),
     installPlatformIO: () => ipcRenderer.invoke("install-platformio"),
+    compileFirmware: (
+      deviceString: string,
+      zipPath: string,
+      optionsJsonString: string,
+    ) =>
+      ipcRenderer.invoke(
+        "compile-firmware",
+        deviceString,
+        zipPath,
+        optionsJsonString,
+      ),
   };
 }

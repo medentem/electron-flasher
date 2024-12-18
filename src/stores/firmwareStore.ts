@@ -14,6 +14,7 @@ interface FirmwareState {
   selectedFirmware: FirmwareResource | undefined;
   customFirmwarePath: string | undefined;
   customFirmwareFileName: string | undefined;
+  compileFirmwareZipPath: string | undefined;
   hasDependenciesToCustomizeFirmware: boolean;
   isCompiling: boolean;
   isLoadingFirmwareCustomizationOptions: boolean;
@@ -25,6 +26,10 @@ interface FirmwareState {
   getFirmwareDownloadUrl: (fileName: string) => string;
   hasCustomFirmware: () => boolean;
   getFirmwareCustomizationOptions: () => Promise<void>;
+  compileCustomFirmware: (
+    deviceString: string,
+    options: CustomFirmwareOption[],
+  ) => Promise<boolean>;
   setHasDependenciesToCustomizeFirmware: (hasDependencies: boolean) => void;
 }
 
@@ -37,6 +42,7 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   selectedFirmware: undefined,
   customFirmwarePath: undefined,
   customFirmwareFileName: undefined,
+  compileFirmwareZipPath: undefined,
   hasDependenciesToCustomizeFirmware: false,
   isCompiling: false,
   isLoadingFirmwareCustomizationOptions: false,
@@ -45,18 +51,20 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     return get().customFirmwareFileName !== undefined;
   },
   setHasDependenciesToCustomizeFirmware: (hasDependencies: boolean) => {
+    // Once true, always true
+    if (get().hasDependenciesToCustomizeFirmware) return;
     set({ hasDependenciesToCustomizeFirmware: hasDependencies });
   },
   setSelectedFirmware: (selectedFirmwareId: string) => {
     const firmware = get().firmwareRollup.find(
       (x) => x.id === selectedFirmwareId,
     );
-    if (get().hasDependenciesToCustomizeFirmware) {
-      get().getFirmwareCustomizationOptions();
-    }
     set({
       selectedFirmware: firmware,
     });
+    if (get().hasDependenciesToCustomizeFirmware) {
+      get().getFirmwareCustomizationOptions();
+    }
   },
   setCustomFirmware: async (customFirmware: string) => {
     const fileName = await window.electronAPI.getFilename(customFirmware);
@@ -98,6 +106,7 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     return firmwareDownloadUrl;
   },
   getFirmwareCustomizationOptions: async () => {
+    console.log("Getting firmware customization options");
     set({ isLoadingFirmwareCustomizationOptions: true });
     const selectedFirmware = get().selectedFirmware;
     const firmwareDownloadUrl = getFirmwareZipDownloadUrl(
@@ -108,12 +117,40 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const userPrefsContent = await window.electronAPI.getCustomFirmwareOptions(
       fileInfo.fullPath,
     );
-    console.log(userPrefsContent);
     set({
       firmwareCustomizationOptions: userPrefsContent,
       isLoadingFirmwareCustomizationOptions: false,
+      compileFirmwareZipPath: fileInfo.fullPath,
     });
-    //fileName = fileInfo.fileName;
-    //finalCopyFromPath = fileInfo.fullPath;
+  },
+  compileCustomFirmware: async (
+    deviceString: string,
+    options: CustomFirmwareOption[],
+  ) => {
+    set({ isCompiling: true });
+
+    const jsoncString =
+      options && options.length > 0
+        ? JSON.stringify(
+            options.map((x) => {
+              x.name;
+              x.value;
+            }),
+          )
+        : "{}";
+
+    const compileFirmwareZipPath = get().compileFirmwareZipPath;
+    console.log(deviceString);
+    console.log(jsoncString);
+    console.log(compileFirmwareZipPath);
+
+    await window.electronAPI.compileFirmware(
+      deviceString,
+      compileFirmwareZipPath,
+      jsoncString,
+    );
+
+    set({ isCompiling: false });
+    return true;
   },
 }));

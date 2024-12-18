@@ -34,6 +34,43 @@ export function registerPlatformIOHandlers(mainWindow: BrowserWindow) {
     const foundPIO = await installPlatformIO(_pythonCommand);
     return foundPIO;
   });
+
+  ipcMain.handle(
+    "compile-firmware",
+    async (
+      _event,
+      deviceString: string,
+      zipPath: string,
+      optionsJsonString: string,
+    ) => {
+      // TODO: write the optionsJSONString to userPrefs.jsonc in the folderPath
+      console.log("IPC HANDLER: compile-firmware");
+      console.log(deviceString);
+      console.log(zipPath);
+      console.log(optionsJsonString);
+
+      const dirName = path.dirname(zipPath);
+      const baseName = path.basename(zipPath, path.extname(zipPath));
+      const extractDir = path.join(dirName, baseName);
+      const sourceCodePath = path.join(
+        extractDir,
+        baseName.replace("v", "firmware-"),
+      );
+      console.log(sourceCodePath);
+      execFile(
+        "platformio",
+        ["run", "-e", deviceString],
+        { cwd: sourceCodePath },
+        (error, stdout, stderr) => {
+          if (error) {
+            console.error("Build failed:", stderr);
+          } else {
+            console.log("Build success:", stdout);
+          }
+        },
+      );
+    },
+  );
 }
 
 async function installPlatformIO(pythonCommand = "python") {

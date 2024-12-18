@@ -22,7 +22,13 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
     (state) => state.isLoadingFirmwareCustomizationOptions,
   );
 
-  const lclApplyCustomizedOptions = () => {};
+  const compileCustomFirmware = useFirmwareStore(
+    (state) => state.compileCustomFirmware,
+  );
+
+  const lclApplyCustomizedOptions = () => {
+    compileCustomFirmware("station-g2", []);
+  };
 
   useEffect(() => {
     getFirmwareCustomizationOptions();
@@ -111,12 +117,15 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
               <button
                 type="button"
                 onClick={cancelCustomization}
+                disabled={isCompiling}
                 className="text-sm/6 font-semibold text-gray-900"
               >
                 Cancel
               </button>
               <button
                 type="submit"
+                onClick={lclApplyCustomizedOptions}
+                disabled={isCompiling}
                 className="rounded-md bg-meshtastic-green px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-meshtastic-green/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 Save
