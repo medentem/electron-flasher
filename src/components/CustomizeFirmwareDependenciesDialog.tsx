@@ -9,6 +9,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
+import { useFirmwareStore } from "../stores/firmwareStore";
 
 export interface CustomizeFirmwareDialogProps {
   open: boolean;
@@ -19,8 +20,15 @@ export default function CustomizeFirmwareDialog(
   props: CustomizeFirmwareDialogProps,
 ) {
   const { open, onClose } = props;
+
+  const hasDependenciesToCustomizeFirmware = useFirmwareStore(
+    (state) => state.hasDependenciesToCustomizeFirmware,
+  );
+  const setHasDependenciesToCustomizeFirmware = useFirmwareStore(
+    (state) => state.setHasDependenciesToCustomizeFirmware,
+  );
+
   const [isLoading, setIsLoading] = useState(false);
-  const [allDepsInstalled, setAllDepsInstalled] = useState(false);
   const [pythonInstalled, setPythonInstalled] = useState<undefined | boolean>();
   const [platformIOInstalled, setPlatformIOInstalled] = useState<
     undefined | boolean
@@ -35,16 +43,22 @@ export default function CustomizeFirmwareDialog(
   );
 
   useEffect(() => {
-    setAllDepsInstalled(pythonInstalled && platformIOInstalled);
+    setHasDependenciesToCustomizeFirmware(
+      pythonInstalled && platformIOInstalled,
+    );
     if (pythonInstalled && platformIOInstalled) {
       setDialogTitle("All Set!");
     } else {
       setDialogTitle("Additional Software Required");
     }
-  }, [pythonInstalled, platformIOInstalled]);
+  }, [
+    setHasDependenciesToCustomizeFirmware,
+    pythonInstalled,
+    platformIOInstalled,
+  ]);
 
   const checkSoftware = () => {
-    if (allDepsInstalled) {
+    if (hasDependenciesToCustomizeFirmware) {
       lclOnClose(true);
       return;
     }
@@ -110,13 +124,13 @@ export default function CustomizeFirmwareDialog(
           >
             <div>
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full">
-                {!isLoading && !allDepsInstalled && (
+                {!isLoading && !hasDependenciesToCustomizeFirmware && (
                   <ExclamationCircleIcon
                     aria-hidden="true"
                     className="h-12 w-12 text-gray-500 dark:text-gray-400"
                   />
                 )}
-                {!isLoading && allDepsInstalled && (
+                {!isLoading && hasDependenciesToCustomizeFirmware && (
                   <CheckCircleIcon
                     aria-hidden="true"
                     className="h-12 w-12 text-meshtastic-green"
@@ -269,7 +283,7 @@ export default function CustomizeFirmwareDialog(
               >
                 {isLoading
                   ? "Checking..."
-                  : allDepsInstalled
+                  : hasDependenciesToCustomizeFirmware
                     ? "Continue"
                     : "Check Now"}
               </button>

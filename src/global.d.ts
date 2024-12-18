@@ -18,7 +18,9 @@ declare global {
     enterDfuMode: () => Promise<void>;
     getDrives: (requestId: string) => Promise<Drive[]>;
     downloadFirmware: (fileUrl: string) => Promise<FileInfo>;
-    getUserprefsFile: (fullPath: string) => Promise<string>;
+    getCustomFirmwareOptions: (
+      fullPath: string,
+    ) => Promise<CustomFirmwareOption[] | undefined>;
     copyFirmware: (
       fileName: string,
       fromPath: string,
@@ -89,5 +91,12 @@ declare global {
       alpha: FirmwareResource[];
     };
     pullRequests: FirmwareResource[];
+  }
+
+  interface CustomFirmwareOption {
+    name: string;
+    prettyName: string;
+    type: "string" | "boolean" | "number" | "arrayOfHexValues";
+    value: string | boolean | number | number[];
   }
 }

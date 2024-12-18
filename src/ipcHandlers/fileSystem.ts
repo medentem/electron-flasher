@@ -19,7 +19,7 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
   });
 
   ipcMain.handle(
-    "get-userprefs-file",
+    "get-custom-firmware-options",
     async (_event: any, fullPath: string) => {
       try {
         // 1. Determine the directory of the zip file
@@ -47,18 +47,19 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
 
         // Check if the file exists
         if (!fs.existsSync(userPrefsPath)) {
-          return {
-            success: false,
-            error: "userPrefs.jsonc not found in extracted directory.",
-          };
+          return undefined;
         }
 
         // Read the file contents
-        const userPrefsContent = fs.readFileSync(userPrefsPath, "utf-8");
-
-        return { success: true, folderPath: extractDir, userPrefsContent };
+        let userPrefsContent = fs.readFileSync(userPrefsPath, "utf-8");
+        // Uncomment all prefernces
+        // Fix lines without ending commas
+        userPrefsContent = userPrefsContent
+          .replace(/\/\//g, "")
+          .replace(/("[^"]+"\s*:\s*"[^"]+")\s*(?="[^"]+"\s*:)/g, "$1,");
+        return createCustomFirmwareOptions(userPrefsContent);
       } catch (error: any) {
-        return { success: false, error: error.message };
+        return undefined;
       }
     },
   );
@@ -133,4 +134,80 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle("get-filename", async (_event: any, filePath: string) => {
     return path.basename(filePath);
   });
+}
+
+function inferType(
+  valueStr: string,
+): "string" | "boolean" | "number" | "arrayOfHexValues" {
+  const trimmed = valueStr.trim();
+
+  if (trimmed === "true" || trimmed === "false") {
+    return "boolean";
+  }
+  if (trimmed !== "" && !Number.isNaN(Number(trimmed))) {
+    return "number";
+  }
+  if (/^\{.*\}$/.test(trimmed)) {
+    return "arrayOfHexValues";
+  }
+  return "string";
+}
+
+function castValue(
+  valueStr: string,
+  type: "string" | "boolean" | "number" | "arrayOfHexValues",
+): boolean | number | string | number[] {
+  switch (type) {
+    case "boolean":
+      return valueStr.trim() === "true";
+    case "number":
+      return Number(valueStr.trim());
+    case "arrayOfHexValues": {
+      const inner = valueStr.replace(/[{}]/g, "").trim();
+      // inner = "0x38, 0x4b, 0xbc, 0xc0"
+      if (inner.length > 0) {
+        // Split by comma
+        const hexStrings = inner.split(",").map((s) => s.trim());
+        // hexStrings = ["0x38", "0x4b", "0xbc", "0xc0"]
+
+        // Convert each to a number
+        const hexValues = hexStrings.map((hx) => Number.parseInt(hx, 16));
+        return hexValues;
+      }
+      return [];
+    }
+    default:
+      return valueStr;
+  }
+}
+
+function createCustomFirmwareOptions(
+  jsonString: string,
+): CustomFirmwareOption[] {
+  const obj = JSON.parse(jsonString) as Record<string, string>;
+  const options: CustomFirmwareOption[] = [];
+
+  for (const [paramName, valueStr] of Object.entries(obj)) {
+    const type = inferType(valueStr);
+    const castedValue = castValue(valueStr, type);
+    // Split by underscore, lowercase, and then capitalize each part
+    const parts = paramName
+      .replace("USERPREFS_", "")
+      .split("_")
+      .map((part) => {
+        const lower = part.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      });
+
+    // Join the parts with spaces
+    const prettyName = parts.join(" ");
+    options.push({
+      name: paramName,
+      prettyName,
+      type,
+      value: castedValue,
+    });
+  }
+
+  return options;
 }

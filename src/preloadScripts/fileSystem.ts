@@ -4,8 +4,8 @@ export function preloadFileSystemAPIs(ipcRenderer: Electron.IpcRenderer) {
       ipcRenderer.invoke("get-drives", requestId),
     downloadFirmware: (fileUrl: string) =>
       ipcRenderer.invoke("download-firmware", fileUrl),
-    getUserprefsFile: (fullPath: string) =>
-      ipcRenderer.invoke("get-userprefs-file", fullPath),
+    getCustomFirmwareOptions: (fullPath: string) =>
+      ipcRenderer.invoke("get-custom-firmware-options", fullPath),
     copyFirmware: (fileName: string, fromPath: string, toPath: string) =>
       ipcRenderer.invoke("copy-firmware", fileName, fromPath, toPath),
     selectFile: () => ipcRenderer.invoke("select-file"),

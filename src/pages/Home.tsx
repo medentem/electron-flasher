@@ -79,7 +79,6 @@ const Home: React.FC = () => {
   };
 
   const onCustomizeFirmware = () => {
-    console.log("Customize firmware clicked");
     setOpenCustomizeFirwareDependenciesDialog(true);
   };
 
