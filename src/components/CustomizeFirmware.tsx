@@ -1,7 +1,7 @@
 import { useFirmwareStore } from "../stores/firmwareStore";
 import { useEffect } from "react";
-import { Switch } from "@headlessui/react";
 import { useDeviceStore } from "../stores/deviceStore";
+import FormSwitch from "./FormSwitch";
 
 export interface CustomizeFirmwareProps {
   cancelCustomization: () => void;
@@ -29,8 +29,21 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
     (state) => state.compileCustomFirmware,
   );
 
-  const lclApplyCustomizedOptions = () => {
-    compileCustomFirmware(connectedTarget.platformioTarget, []);
+  const formSubmitHandler = (event: React.FormEvent) => {
+    event.preventDefault();
+    const formData = new FormData(event.target as HTMLFormElement);
+    const options: CustomFirmwareOption[] = [];
+    for (const [key, value] of formData.entries()) {
+      if (value === "" || value === "off") {
+        continue;
+      }
+      options.push({
+        name: key,
+        value: (value as string) === "on" ? "true" : (value as string),
+      });
+    }
+    console.log(options);
+    //compileCustomFirmware(connectedTarget.platformioTarget, options);
   };
 
   useEffect(() => {
@@ -70,10 +83,10 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
         )}
       {!isLoadingFirmwareCustomizationOptions &&
         firmwareCustomizationOptions && (
-          <form>
-            <div className="space-y-12 overflow-scroll max-h-72">
-              <div className="border-b border-gray-900/10 pb-12">
-                <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+          <form onSubmit={formSubmitHandler}>
+            <div className="space-y-12 overflow-scroll max-h-96">
+              <div className="border-b border-gray-900/10 pb-12 pl-1">
+                <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-2">
                   {firmwareCustomizationOptions.map((option) => (
                     <div className="col-span-full" key={option.name}>
                       <label
@@ -84,21 +97,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
                       </label>
                       <div className="mt-2">
                         {option.type === "boolean" && (
-                          <Switch className="group relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2">
-                            <span className="sr-only">Use setting</span>
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute size-full rounded-md bg-white"
-                            />
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute mx-auto h-4 w-9 rounded-full bg-gray-200 transition-colors duration-200 ease-in-out group-data-[checked]:bg-indigo-600"
-                            />
-                            <span
-                              aria-hidden="true"
-                              className="pointer-events-none absolute left-0 inline-block size-5 transform rounded-full border border-gray-200 bg-white shadow ring-0 transition-transform duration-200 ease-in-out group-data-[checked]:translate-x-5"
-                            />
-                          </Switch>
+                          <FormSwitch name={option.name} />
                         )}
 
                         {option.type !== "boolean" && (
@@ -107,6 +106,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
                             name={option.name}
                             id={option.name}
                             autoComplete={option.name}
+                            placeholder={option.value as string}
                             className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                           />
                         )}
@@ -126,8 +126,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={lclApplyCustomizedOptions}
+                type="submit"
                 disabled={isCompiling}
                 className="rounded-md bg-meshtastic-green px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-meshtastic-green/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >

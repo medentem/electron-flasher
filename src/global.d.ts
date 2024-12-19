@@ -100,8 +100,8 @@ declare global {
 
   interface CustomFirmwareOption {
     name: string;
-    prettyName: string;
-    type: "string" | "boolean" | "number" | "arrayOfHexValues";
-    value: string | boolean | number | number[];
+    prettyName?: string;
+    type?: "string" | "boolean" | "number" | "arrayOfHexValues";
+    value: string;
   }
 }
