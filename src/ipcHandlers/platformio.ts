@@ -56,12 +56,17 @@ export function registerPlatformIOHandlers(mainWindow: BrowserWindow) {
       sourceCodePath: string,
       optionsJsonString: string,
     ) => {
-      // TODO: write the optionsJSONString to userPrefs.jsonc in the folderPath
-
       console.log("IPC HANDLER: compile-firmware");
       console.log(deviceString);
       console.log(sourceCodePath);
       console.log(optionsJsonString);
+
+      // Write the userPrefs.jsonc file
+      fs.writeFileSync(
+        path.join(sourceCodePath, "userPrefs.jsonc"),
+        optionsJsonString,
+        "utf8",
+      );
 
       const srcDir = path.join(sourceCodePath, "src");
       const allFiles = findAllCppFiles(srcDir);

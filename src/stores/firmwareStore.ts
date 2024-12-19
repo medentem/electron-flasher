@@ -135,19 +135,23 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   ) => {
     set({ isCompiling: true });
 
-    const jsoncString =
+    const json =
       options && options.length > 0
         ? JSON.stringify(
-            options.map((x) => {
-              x.name;
-              x.value;
-            }),
+            Object.fromEntries(
+              options.map((opt) => [
+                opt.name,
+                isBase64(opt.value)
+                  ? base64ToHexArrayString(opt.value)
+                  : opt.value,
+              ]),
+            ),
           )
         : "{}";
 
     const compileFirmwareZipPath = get().compileFirmwareZipPath;
     console.log(deviceString);
-    console.log(jsoncString);
+    console.log(json);
     console.log(compileFirmwareZipPath);
 
     const compileFirmwareSourcePath =
@@ -160,7 +164,7 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const compiledFirmwarePath = await window.electronAPI.compileFirmware(
       deviceString,
       compileFirmwareSourcePath,
-      jsoncString,
+      json,
     );
 
     get().setCustomFirmware(compiledFirmwarePath);
@@ -169,3 +173,23 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     return true;
   },
 }));
+
+function isBase64(str: unknown): str is string {
+  if (typeof str !== "string") return false;
+  // A simple base64 regex check: base64 typically only contains A-Z, a-z, 0-9, +, / and possibly '=' padding
+  return /^[A-Za-z0-9+/]+={0,2}$/.test(str);
+}
+
+function base64ToHexArrayString(base64Str: string): string {
+  // Decode Base64 into a buffer
+  const buffer = Buffer.from(base64Str, "base64");
+
+  // Convert each byte to a hex string like 0xd4
+  const hexValues = Array.from(
+    buffer,
+    (byte) => `0x${byte.toString(16).padStart(2, "0")}`,
+  );
+
+  // Join them with commas and wrap with braces
+  return `{ ${hexValues.join(", ")} }`;
+}
