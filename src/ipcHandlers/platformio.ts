@@ -61,12 +61,17 @@ export function registerPlatformIOHandlers(mainWindow: BrowserWindow) {
       console.log(sourceCodePath);
       console.log(optionsJsonString);
 
-      // Write the userPrefs.jsonc file
-      fs.writeFileSync(
-        path.join(sourceCodePath, "userPrefs.jsonc"),
-        optionsJsonString,
-        "utf8",
-      );
+      try {
+        // Write the userPrefs.jsonc file
+        fs.writeFileSync(
+          path.join(sourceCodePath, "userPrefs.jsonc"),
+          optionsJsonString,
+          "utf8",
+        );
+      } catch (error) {
+        console.error("Failed to write userPrefs.jsonc:", error);
+        throw error;
+      }
 
       const srcDir = path.join(sourceCodePath, "src");
       const allFiles = findAllCppFiles(srcDir);

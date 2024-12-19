@@ -181,12 +181,17 @@ function isBase64(str: unknown): str is string {
 }
 
 function base64ToHexArrayString(base64Str: string): string {
-  // Decode Base64 into a buffer
-  const buffer = Buffer.from(base64Str, "base64");
+  // Decode Base64 into a binary string
+  const binaryStr = atob(base64Str);
 
-  // Convert each byte to a hex string like 0xd4
-  const hexValues = Array.from(
-    buffer,
+  // Convert each character's char code into a byte (0-255)
+  const byteValues = [];
+  for (let i = 0; i < binaryStr.length; i++) {
+    byteValues.push(binaryStr.charCodeAt(i));
+  }
+
+  // Convert each byte to a hex string like "0xd4"
+  const hexValues = byteValues.map(
     (byte) => `0x${byte.toString(16).padStart(2, "0")}`,
   );
 
