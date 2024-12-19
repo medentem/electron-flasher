@@ -156,28 +156,21 @@ function inferType(
 function castValue(
   valueStr: string,
   type: "string" | "boolean" | "number" | "arrayOfHexValues",
-): boolean | number | string | number[] {
+): string {
   switch (type) {
-    case "boolean":
-      return valueStr.trim() === "true";
-    case "number":
-      return Number(valueStr.trim());
     case "arrayOfHexValues": {
       const inner = valueStr.replace(/[{}]/g, "").trim();
-      // inner = "0x38, 0x4b, 0xbc, 0xc0"
       if (inner.length > 0) {
-        // Split by comma
         const hexStrings = inner.split(",").map((s) => s.trim());
-        // hexStrings = ["0x38", "0x4b", "0xbc", "0xc0"]
-
-        // Convert each to a number
         const hexValues = hexStrings.map((hx) => Number.parseInt(hx, 16));
-        return hexValues;
+        // Convert array of bytes to a Buffer and then to Base64
+        const buffer = Buffer.from(hexValues);
+        return buffer.toString("base64");
       }
-      return [];
+      return "";
     }
     default:
-      return valueStr;
+      return valueStr.trim();
   }
 }
 
