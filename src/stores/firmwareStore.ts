@@ -135,13 +135,24 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   ) => {
     set({ isCompiling: true });
 
+    if (
+      options &&
+      options.length > 0 &&
+      options.findIndex((x) => x.name === "USERPREFS_TZ_STRING") === -1
+    ) {
+      options.push({
+        name: "USERPREFS_TZ_STRING",
+        value: "tzplaceholder                                         ",
+      });
+    }
+
     const json =
       options && options.length > 0
         ? JSON.stringify(
             Object.fromEntries(
               options.map((opt) => [
                 opt.name,
-                isBase64(opt.value)
+                opt.type === "arrayOfHexValues"
                   ? base64ToHexArrayString(opt.value)
                   : opt.value,
               ]),
@@ -174,27 +185,25 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   },
 }));
 
-function isBase64(str: unknown): str is string {
-  if (typeof str !== "string") return false;
-  // A simple base64 regex check: base64 typically only contains A-Z, a-z, 0-9, +, / and possibly '=' padding
-  return /^[A-Za-z0-9+/]+={0,2}$/.test(str);
-}
-
 function base64ToHexArrayString(base64Str: string): string {
-  // Decode Base64 into a binary string
-  const binaryStr = atob(base64Str);
+  try {
+    // Decode Base64 into a binary string
+    const binaryStr = atob(base64Str);
 
-  // Convert each character's char code into a byte (0-255)
-  const byteValues = [];
-  for (let i = 0; i < binaryStr.length; i++) {
-    byteValues.push(binaryStr.charCodeAt(i));
+    // Convert each character's char code into a byte (0-255)
+    const byteValues = [];
+    for (let i = 0; i < binaryStr.length; i++) {
+      byteValues.push(binaryStr.charCodeAt(i));
+    }
+
+    // Convert each byte to a hex string like "0xd4"
+    const hexValues = byteValues.map(
+      (byte) => `0x${byte.toString(16).padStart(2, "0")}`,
+    );
+
+    // Join them with commas and wrap with braces
+    return `{ ${hexValues.join(", ")} }`;
+  } catch {
+    return base64Str;
   }
-
-  // Convert each byte to a hex string like "0xd4"
-  const hexValues = byteValues.map(
-    (byte) => `0x${byte.toString(16).padStart(2, "0")}`,
-  );
-
-  // Join them with commas and wrap with braces
-  return `{ ${hexValues.join(", ")} }`;
 }

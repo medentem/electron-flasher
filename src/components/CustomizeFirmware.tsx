@@ -41,9 +41,11 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
       if (value === "" || value === "off") {
         continue;
       }
+      const option = firmwareCustomizationOptions.find((x) => x.name === key);
       options.push({
         name: key,
         value: (value as string) === "on" ? "true" : (value as string),
+        type: option?.type,
       });
     }
     console.log(options);
@@ -132,7 +134,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
               <button
                 type="submit"
                 disabled={isCompiling}
-                className={`rounded-md ${isCompiling ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
+                className={`rounded-md ${isCompiling || hasCustomFirmware() ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
               >
                 {isCompiling
                   ? buildProgress
