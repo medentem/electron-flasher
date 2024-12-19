@@ -13,6 +13,7 @@ export interface DeviceCardProps {
 export default function DeviceCard(props: DeviceCardProps) {
   const { onUpdateClick } = props;
   const [showToaster, setShowToaster] = useState(false);
+  const [showFullDeviceDetails, setShowFullDeviceDetails] = useState(false);
   const [toasterPrimaryMessage, setToasterPrimaryMessage] = useState(
     "Your device will be wiped clean!",
   );
@@ -246,44 +247,74 @@ export default function DeviceCard(props: DeviceCardProps) {
                     </div>
                     <div className="px-4 py-1">
                       <dt className="text-xs font-medium leading-6 text-gray-900">
-                        Device Name
-                      </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700">
-                        {selectedPort.deviceName}
-                      </dd>
-                    </div>
-                    <div className="px-4 py-1">
-                      <dt className="text-xs font-medium leading-6 text-gray-900">
                         Device Serial
                       </dt>
                       <dd className="mt-1 text-sm leading-6 text-gray-700">
                         {`${"*".repeat(selectedPort.serialNumber.length - 4)}${selectedPort.serialNumber.slice(selectedPort.serialNumber.length - 4)}`}
                       </dd>
                     </div>
-                    <div className="px-4 py-1">
-                      <dt className="text-xs font-medium leading-6 text-gray-900">
-                        Manufacturer
-                      </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700">
-                        {selectedPort.manufacturer}
-                      </dd>
-                    </div>
-                    <div className="px-4 py-1">
-                      <dt className="text-xs font-medium leading-6 text-gray-900">
-                        Has Bluetooth?
-                      </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700">
-                        {connectedDevice.hasBluetooth ? "Yes" : "No"}
-                      </dd>
-                    </div>
-                    <div className="px-4 py-1">
-                      <dt className="text-xs font-medium leading-6 text-gray-900">
-                        Has WiFi?
-                      </dt>
-                      <dd className="mt-1 text-sm leading-6 text-gray-700">
-                        {connectedDevice.hasWifi ? "Yes" : "No"}
-                      </dd>
-                    </div>
+                    {!showFullDeviceDetails && (
+                      <span
+                        className="px-4 py-1 text-xs leading-6 text-gray-700 cursor-pointer"
+                        onClick={() => setShowFullDeviceDetails(true)}
+                        onKeyUp={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setShowFullDeviceDetails(true);
+                          }
+                        }}
+                      >
+                        Show More
+                      </span>
+                    )}
+                    {showFullDeviceDetails && (
+                      <>
+                        <div className="px-4 py-1">
+                          <dt className="text-xs font-medium leading-6 text-gray-900">
+                            Manufacturer
+                          </dt>
+                          <dd className="mt-1 text-sm leading-6 text-gray-700">
+                            {selectedPort.manufacturer}
+                          </dd>
+                        </div>
+                        <div className="px-4 py-1">
+                          <dt className="text-xs font-medium leading-6 text-gray-900">
+                            Device Name
+                          </dt>
+                          <dd className="mt-1 text-sm leading-6 text-gray-700">
+                            {selectedPort.deviceName}
+                          </dd>
+                        </div>
+                        <div className="px-4 py-1">
+                          <dt className="text-xs font-medium leading-6 text-gray-900">
+                            Has Bluetooth?
+                          </dt>
+                          <dd className="mt-1 text-sm leading-6 text-gray-700">
+                            {connectedDevice.hasBluetooth ? "Yes" : "No"}
+                          </dd>
+                        </div>
+                        <div className="px-4 py-1">
+                          <dt className="text-xs font-medium leading-6 text-gray-900">
+                            Has WiFi?
+                          </dt>
+                          <dd className="mt-1 text-sm leading-6 text-gray-700">
+                            {connectedDevice.hasWifi ? "Yes" : "No"}
+                          </dd>
+                        </div>
+                      </>
+                    )}
+                    {showFullDeviceDetails && (
+                      <span
+                        className="px-4 py-1 text-xs leading-6 text-gray-700 cursor-pointer"
+                        onClick={() => setShowFullDeviceDetails(false)}
+                        onKeyUp={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setShowFullDeviceDetails(false);
+                          }
+                        }}
+                      >
+                        Hide Details
+                      </span>
+                    )}
                   </dl>
                 </div>
               </div>
