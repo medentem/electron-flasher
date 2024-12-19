@@ -1,8 +1,9 @@
 // src/ipcHandlers/platformio.ts
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import path from "node:path";
 import { type BrowserWindow, ipcMain } from "electron";
+import fs from "node:fs";
 
 let _mainWindow: BrowserWindow | undefined;
 let _pythonCommand = "";
@@ -35,42 +36,130 @@ export function registerPlatformIOHandlers(mainWindow: BrowserWindow) {
     return foundPIO;
   });
 
+  ipcMain.handle("get-source-code-path", async (_event, zipPath: string) => {
+    const dirName = path.dirname(zipPath);
+    const baseName = path.basename(zipPath, path.extname(zipPath));
+    const extractDir = path.join(dirName, baseName);
+    const sourceCodePath = path.join(
+      extractDir,
+      baseName.replace("v", "firmware-"),
+    );
+    console.log(sourceCodePath);
+    return sourceCodePath;
+  });
+
   ipcMain.handle(
     "compile-firmware",
     async (
       _event,
       deviceString: string,
-      zipPath: string,
+      sourceCodePath: string,
       optionsJsonString: string,
     ) => {
       // TODO: write the optionsJSONString to userPrefs.jsonc in the folderPath
+
       console.log("IPC HANDLER: compile-firmware");
       console.log(deviceString);
-      console.log(zipPath);
+      console.log(sourceCodePath);
       console.log(optionsJsonString);
 
-      const dirName = path.dirname(zipPath);
-      const baseName = path.basename(zipPath, path.extname(zipPath));
-      const extractDir = path.join(dirName, baseName);
-      const sourceCodePath = path.join(
-        extractDir,
-        baseName.replace("v", "firmware-"),
-      );
-      console.log(sourceCodePath);
-      execFile(
-        "platformio",
-        ["run", "-e", deviceString],
-        { cwd: sourceCodePath },
-        (error, stdout, stderr) => {
-          if (error) {
-            console.error("Build failed:", stderr);
-          } else {
-            console.log("Build success:", stdout);
+      const srcDir = path.join(sourceCodePath, "src");
+      const allFiles = findAllCppFiles(srcDir);
+      const totalFiles = allFiles.length;
+      console.log("Total files to compile:", totalFiles);
+
+      return new Promise((resolve, reject) => {
+        // Spawn platformio build
+        const pio = spawn("platformio", ["run", "-e", deviceString], {
+          cwd: sourceCodePath,
+        });
+
+        let compiledCount = 0;
+
+        pio.stdout.on("data", (data) => {
+          const line = data.toString();
+
+          // Check if line indicates a compiled file, for example:
+          // "Compiling .pio/build/heltec_esp32/src/main.cpp.o"
+          if (line.includes("Compiling") && line.includes(".cpp")) {
+            compiledCount++;
+            const percentage = Math.round((compiledCount / totalFiles) * 100);
+
+            // Send progress update to the renderer
+            if (_mainWindow) {
+              _mainWindow.webContents.send("on-build-progress", percentage);
+            }
           }
-        },
-      );
+
+          console.log(`stdout: ${line}`);
+        });
+
+        pio.stderr.on("data", (data) => {
+          console.error(`stderr: ${data}`);
+        });
+
+        pio.on("close", (code) => {
+          console.log(`PlatformIO process exited with code: ${code}`);
+          if (code === 0) {
+            console.log("Build succeeded.");
+            // Send 100% just to finalize
+            if (_mainWindow) {
+              _mainWindow.webContents.send("on-build-progress", 100);
+            }
+            // Only now that the build is done, get the firmware file path
+            const firmwarePath = getCompiledFirmwareFilePath(
+              sourceCodePath,
+              deviceString,
+            );
+            if (firmwarePath) {
+              resolve(firmwarePath);
+            } else {
+              reject(
+                new Error("Firmware file not found after successful build."),
+              );
+            }
+          } else {
+            console.error("Build failed.");
+            reject(new Error(`Build failed with exit code ${code}.`));
+          }
+        });
+      });
     },
   );
+}
+
+function findAllCppFiles(dir: string) {
+  let results: string[] = [];
+  const list = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of list) {
+    const filePath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results = results.concat(findAllCppFiles(filePath));
+    } else if (entry.isFile() && filePath.endsWith(".cpp")) {
+      results.push(filePath);
+    }
+  }
+  return results;
+}
+
+function getCompiledFirmwareFilePath(
+  sourceCodePath: string,
+  deviceString: string,
+) {
+  const buildFolder = path.join(sourceCodePath, ".pio", "build", deviceString);
+
+  // Possible firmware filenames
+  const possibleFiles = ["firmware.uf2", "firmware.factory.bin"];
+
+  for (const filename of possibleFiles) {
+    const filePath = path.join(buildFolder, filename);
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+  }
+
+  // If neither file exists, return null or throw an error
+  return null;
 }
 
 async function installPlatformIO(pythonCommand = "python") {

@@ -5,6 +5,7 @@ import { sleep } from "../utils/promise";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import Toaster from "./Toaster";
 import ToolTip from "./ToolTip";
+import { useFirmwareStore } from "../stores/firmwareStore";
 
 export interface DeviceCardProps {
   onUpdateClick: () => void;
@@ -20,6 +21,7 @@ export default function DeviceCard(props: DeviceCardProps) {
   const [toasterSecondaryMessage, setToasterSecondaryMessage] = useState(
     "All your settings, channels and preferences will be removed.",
   );
+  const isCompiling = useFirmwareStore((state) => state.isCompiling);
   const availablePorts = useDeviceStore((state) => state.availablePorts);
   const availableTargets = useDeviceStore((state) => state.availableTargets);
   const selectedPort = useDeviceStore((state) => state.selectedPort);
@@ -161,9 +163,9 @@ export default function DeviceCard(props: DeviceCardProps) {
                 {connectedDevice && !finishedUpdate && (
                   <button
                     type="button"
-                    className={`inline-flex items-center rounded-md ${isUpdating ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm `}
+                    className={`inline-flex items-center rounded-md ${isUpdating || isCompiling ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm `}
                     onClick={lclUpdateDevice}
-                    disabled={isUpdating}
+                    disabled={isUpdating || isCompiling}
                   >
                     {isUpdating ? "Updating..." : "Update Device"}
                   </button>

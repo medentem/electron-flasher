@@ -50,9 +50,11 @@ declare global {
     installPlatformIO: () => Promise<boolean>;
     compileFirmware: (
       deviceString: string,
-      zipPath: string,
+      compileFirmwareSourcePath: string,
       optionsJsonString: string,
-    ) => Promise<boolean>;
+    ) => Promise<string>;
+    getSourceCodePath: (zipPath: string) => Promise<string>;
+    onBuildProgress: (callback: (progress: number) => void) => void;
   }
 
   interface SerialPortInfo {

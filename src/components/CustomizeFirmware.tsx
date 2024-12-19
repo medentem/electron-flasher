@@ -19,6 +19,10 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
   );
 
   const isCompiling = useFirmwareStore((state) => state.isCompiling);
+  const hasCustomFirmware = useFirmwareStore(
+    (state) => state.hasCustomFirmware,
+  );
+  const buildProgress = useFirmwareStore((state) => state.buildProgress);
   const isLoadingFirmwareCustomizationOptions = useFirmwareStore(
     (state) => state.isLoadingFirmwareCustomizationOptions,
   );
@@ -43,7 +47,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
       });
     }
     console.log(options);
-    //compileCustomFirmware(connectedTarget.platformioTarget, options);
+    compileCustomFirmware(connectedTarget.platformioTarget, options);
   };
 
   useEffect(() => {
@@ -128,9 +132,15 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
               <button
                 type="submit"
                 disabled={isCompiling}
-                className="rounded-md bg-meshtastic-green px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-meshtastic-green/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className={`rounded-md ${isCompiling ? "bg-gray-400 hover:bg-gray-400" : "bg-meshtastic-green hover:bg-meshtastic-green/70"} px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}
               >
-                Save
+                {isCompiling
+                  ? buildProgress
+                    ? `Building: ${buildProgress}%`
+                    : "Getting dependencies..."
+                  : hasCustomFirmware()
+                    ? "Done"
+                    : "Create Custom Firmware"}
               </button>
             </div>
           </form>

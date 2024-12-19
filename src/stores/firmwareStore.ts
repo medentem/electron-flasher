@@ -15,6 +15,7 @@ interface FirmwareState {
   customFirmwarePath: string | undefined;
   customFirmwareFileName: string | undefined;
   compileFirmwareZipPath: string | undefined;
+  buildProgress: number | undefined;
   hasDependenciesToCustomizeFirmware: boolean;
   isCompiling: boolean;
   isLoadingFirmwareCustomizationOptions: boolean;
@@ -43,6 +44,7 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
   customFirmwarePath: undefined,
   customFirmwareFileName: undefined,
   compileFirmwareZipPath: undefined,
+  buildProgress: undefined,
   hasDependenciesToCustomizeFirmware: false,
   isCompiling: false,
   isLoadingFirmwareCustomizationOptions: false,
@@ -62,7 +64,10 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     set({
       selectedFirmware: firmware,
     });
-    if (get().hasDependenciesToCustomizeFirmware) {
+    if (
+      get().hasDependenciesToCustomizeFirmware &&
+      !get().hasCustomFirmware()
+    ) {
       get().getFirmwareCustomizationOptions();
     }
   },
@@ -106,6 +111,7 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     return firmwareDownloadUrl;
   },
   getFirmwareCustomizationOptions: async () => {
+    if (get().hasCustomFirmware()) return;
     console.log("Getting firmware customization options");
     set({ isLoadingFirmwareCustomizationOptions: true });
     const selectedFirmware = get().selectedFirmware;
@@ -144,11 +150,20 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     console.log(jsoncString);
     console.log(compileFirmwareZipPath);
 
-    await window.electronAPI.compileFirmware(
+    const compileFirmwareSourcePath =
+      await window.electronAPI.getSourceCodePath(compileFirmwareZipPath);
+
+    window.electronAPI.onBuildProgress((progress: number) => {
+      set({ buildProgress: progress });
+    });
+
+    const compiledFirmwarePath = await window.electronAPI.compileFirmware(
       deviceString,
-      compileFirmwareZipPath,
+      compileFirmwareSourcePath,
       jsoncString,
     );
+
+    get().setCustomFirmware(compiledFirmwarePath);
 
     set({ isCompiling: false });
     return true;

@@ -7,6 +7,7 @@ import {
 import {
   ExclamationCircleIcon,
   CheckCircleIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { useFirmwareStore } from "../stores/firmwareStore";
@@ -21,6 +22,10 @@ export default function CustomizeFirmwareDialog(
 ) {
   const { open, onClose } = props;
 
+  const DEFAULT_PYTHON_SUBTEXT = "Checking for python...";
+  const DEFAULT_PLATFORMIO_SUBTEXT = "Checking for Platform IO...";
+  const DEFAULT_DIALOG_TITLE = "Additional Software Required";
+
   const hasDependenciesToCustomizeFirmware = useFirmwareStore(
     (state) => state.hasDependenciesToCustomizeFirmware,
   );
@@ -33,14 +38,12 @@ export default function CustomizeFirmwareDialog(
   const [platformIOInstalled, setPlatformIOInstalled] = useState<
     undefined | boolean
   >();
-  const [pythonSubText, setPythonSubText] = useState("Checking for python...");
+  const [pythonSubText, setPythonSubText] = useState(DEFAULT_PYTHON_SUBTEXT);
   const [platformIOSubText, setPlatformIOSubText] = useState(
-    "Checking for Platform IO...",
+    DEFAULT_PLATFORMIO_SUBTEXT,
   );
   const [checkingDependencies, setCheckingDependencies] = useState(false);
-  const [dialogTitle, setDialogTitle] = useState(
-    "Additional Software Required",
-  );
+  const [dialogTitle, setDialogTitle] = useState(DEFAULT_DIALOG_TITLE);
 
   useEffect(() => {
     setHasDependenciesToCustomizeFirmware(
@@ -49,7 +52,7 @@ export default function CustomizeFirmwareDialog(
     if (pythonInstalled && platformIOInstalled) {
       setDialogTitle("All Set!");
     } else {
-      setDialogTitle("Additional Software Required");
+      setDialogTitle(DEFAULT_DIALOG_TITLE);
     }
   }, [
     setHasDependenciesToCustomizeFirmware,
@@ -100,8 +103,9 @@ export default function CustomizeFirmwareDialog(
     setIsLoading(false);
     setCheckingDependencies(false);
     setPythonInstalled(undefined);
-    setPythonSubText("Checking for python...");
-    setDialogTitle("Additional Software Required");
+    setPythonSubText(DEFAULT_PYTHON_SUBTEXT);
+    setPlatformIOSubText(DEFAULT_PLATFORMIO_SUBTEXT);
+    setDialogTitle(DEFAULT_DIALOG_TITLE);
     onClose(isContinue);
   };
 
@@ -249,6 +253,22 @@ export default function CustomizeFirmwareDialog(
                   )}
                   {!checkingDependencies && (
                     <>
+                      <div className="border-l-4 border-yellow-400 bg-yellow-50 p-4">
+                        <div className="flex">
+                          <div className="shrink-0">
+                            <ExclamationTriangleIcon
+                              aria-hidden="true"
+                              className="size-5 text-yellow-400"
+                            />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-xs text-yellow-700">
+                              This is an advanced feature that is still in
+                              development. Please proceed with caution.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                       <p className="text-sm text-gray-500">
                         Meshtastic allows you to customize certain settings
                         before updating your device with new firmware. To do
