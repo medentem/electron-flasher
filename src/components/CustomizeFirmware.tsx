@@ -1,6 +1,7 @@
 import { useFirmwareStore } from "../stores/firmwareStore";
 import { useEffect } from "react";
 import { Switch } from "@headlessui/react";
+import { useDeviceStore } from "../stores/deviceStore";
 
 export interface CustomizeFirmwareProps {
   cancelCustomization: () => void;
@@ -22,12 +23,14 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
     (state) => state.isLoadingFirmwareCustomizationOptions,
   );
 
+  const connectedTarget = useDeviceStore((state) => state.connectedTarget);
+
   const compileCustomFirmware = useFirmwareStore(
     (state) => state.compileCustomFirmware,
   );
 
   const lclApplyCustomizedOptions = () => {
-    compileCustomFirmware("station-g2", []);
+    compileCustomFirmware(connectedTarget.platformioTarget, []);
   };
 
   useEffect(() => {
@@ -60,10 +63,10 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
       )}
       {!isLoadingFirmwareCustomizationOptions &&
         !firmwareCustomizationOptions && (
-          <h2>
+          <h3>
             Firmware customization options were not found. Try a more recent
             firmware version.
-          </h2>
+          </h3>
         )}
       {!isLoadingFirmwareCustomizationOptions &&
         firmwareCustomizationOptions && (
@@ -123,7 +126,7 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
                 Cancel
               </button>
               <button
-                type="submit"
+                type="button"
                 onClick={lclApplyCustomizedOptions}
                 disabled={isCompiling}
                 className="rounded-md bg-meshtastic-green px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-meshtastic-green/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
