@@ -26,7 +26,7 @@ interface FirmwareState {
   getFirmwareReleases: () => Promise<void>;
   getFirmwareDownloadUrl: (fileName: string) => string;
   hasCustomFirmware: () => boolean;
-  getFirmwareCustomizationOptions: () => Promise<void>;
+  getFirmwareCustomizationOptions: (pathToUserPrefs?: string) => Promise<void>;
   compileCustomFirmware: (
     deviceString: string,
     options: CustomFirmwareOption[],
@@ -110,19 +110,22 @@ export const useFirmwareStore = create<FirmwareState>((set, get) => ({
     const firmwareDownloadUrl = `${getCorsFriendyReleaseUrl(selectedFirmware.zip_url)}/${fileName}`;
     return firmwareDownloadUrl;
   },
-  getFirmwareCustomizationOptions: async () => {
+  getFirmwareCustomizationOptions: async (pathToUserPrefs?: string) => {
     if (get().hasCustomFirmware()) return;
     console.log("Getting firmware customization options");
     set({ isLoadingFirmwareCustomizationOptions: true });
+
     const selectedFirmware = get().selectedFirmware;
     const firmwareDownloadUrl = getFirmwareZipDownloadUrl(
       selectedFirmware.zip_url,
     );
     const fileInfo =
       await window.electronAPI.downloadFirmware(firmwareDownloadUrl);
+
     const userPrefsContent = await window.electronAPI.getCustomFirmwareOptions(
-      fileInfo.fullPath,
+      pathToUserPrefs || fileInfo.fullPath,
     );
+
     set({
       firmwareCustomizationOptions: userPrefsContent,
       isLoadingFirmwareCustomizationOptions: false,

@@ -2,6 +2,8 @@ import { useFirmwareStore } from "../stores/firmwareStore";
 import { useEffect } from "react";
 import { useDeviceStore } from "../stores/deviceStore";
 import FormSwitch from "./FormSwitch";
+import ToolTip from "./ToolTip";
+import { FolderPlusIcon } from "@heroicons/react/24/solid";
 
 export interface CustomizeFirmwareProps {
   cancelCustomization: () => void;
@@ -32,6 +34,13 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
   const compileCustomFirmware = useFirmwareStore(
     (state) => state.compileCustomFirmware,
   );
+
+  const openFilePicker = async () => {
+    const filePath = await window.electronAPI.selectFile(["jsonc"]);
+    if (filePath && filePath.length > 0) {
+      getFirmwareCustomizationOptions(filePath);
+    }
+  };
 
   const formSubmitHandler = (event: React.FormEvent) => {
     event.preventDefault();
@@ -64,6 +73,14 @@ export default function CustomizeFirmware(props: CustomizeFirmwareProps) {
             <h3 className="text-base font-semibold leading-6 text-gray-900">
               Customize Firmware
             </h3>
+          </div>
+          <div className="min-w-0 flex 1">
+            <ToolTip tooltip="Custom UserPrefs File">
+              <FolderPlusIcon
+                className="text-gray-500 size-6 cursor-pointer mr-2"
+                onClick={openFilePicker}
+              />
+            </ToolTip>
           </div>
         </div>
       </div>

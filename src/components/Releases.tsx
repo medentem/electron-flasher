@@ -131,7 +131,7 @@ export default function Releases(props: ReleasesProps) {
   };
 
   const openFilePicker = async () => {
-    const filePath = await window.electronAPI.selectFile();
+    const filePath = await window.electronAPI.selectFile(["uf2", "bin"]);
     setCustomFirmware(filePath);
   };
 

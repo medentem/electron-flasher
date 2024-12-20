@@ -49,18 +49,17 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
         if (!fs.existsSync(userPrefsPath)) {
           return undefined;
         }
-
-        // Read the file contents
-        let userPrefsContent = fs.readFileSync(userPrefsPath, "utf-8");
-        // Uncomment all prefernces
-        // Fix lines without ending commas
-        userPrefsContent = userPrefsContent
-          .replace(/\/\//g, "")
-          .replace(/("[^"]+"\s*:\s*"[^"]+")\s*(?="[^"]+"\s*:)/g, "$1,");
-        return createCustomFirmwareOptions(userPrefsContent);
+        return getAndParseUserPrefsFile(userPrefsPath);
       } catch (error: any) {
         return undefined;
       }
+    },
+  );
+
+  ipcMain.handle(
+    "parse-custom-firmware-options",
+    async (_event: any, fullPath: string) => {
+      return getAndParseUserPrefsFile(fullPath);
     },
   );
 
@@ -123,10 +122,10 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
     },
   );
 
-  ipcMain.handle("select-file", async () => {
+  ipcMain.handle("select-file", async (_event: any, extensions: string[]) => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ["openFile"],
-      filters: [{ name: "Firmware", extensions: ["uf2", "bin"] }],
+      filters: [{ name: "Firmware", extensions }],
     });
     return canceled ? undefined : filePaths[0];
   });
@@ -134,6 +133,17 @@ export function registerFileSystemHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle("get-filename", async (_event: any, filePath: string) => {
     return path.basename(filePath);
   });
+}
+
+function getAndParseUserPrefsFile(fullPathToUserPrefsFile: string) {
+  // Read the file contents
+  let userPrefsContent = fs.readFileSync(fullPathToUserPrefsFile, "utf-8");
+  // Uncomment all prefernces
+  // Fix lines without ending commas
+  userPrefsContent = userPrefsContent
+    .replace(/\/\//g, "")
+    .replace(/("[^"]+"\s*:\s*"[^"]+")\s*(?="[^"]+"\s*:)/g, "$1,");
+  return createCustomFirmwareOptions(userPrefsContent);
 }
 
 function inferType(

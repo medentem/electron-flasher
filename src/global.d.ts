@@ -21,12 +21,15 @@ declare global {
     getCustomFirmwareOptions: (
       fullPath: string,
     ) => Promise<CustomFirmwareOption[] | undefined>;
+    parseCustomFirmwareOptions: (
+      fullPath: string,
+    ) => Promise<CustomFirmwareOption[] | undefined>;
     copyFirmware: (
       fileName: string,
       fromPath: string,
       toPath: string,
     ) => Promise<void>;
-    selectFile: () => Promise<string | undefined>;
+    selectFile: (extensions: string[]) => Promise<string | undefined>;
     getFilename: (filePath: string) => Promise<string>;
     baud1200: (path: string) => Promise<boolean>;
     updateEsp32: (
